@@ -121,4 +121,62 @@ describe("DAPA catalog coverage audit", () => {
       matchedDocumentIds: ["law-3"],
     })
   })
+
+  it("uses promulgation metadata when the API canonical title differs", async () => {
+    // Given
+    const law: LegalContentSource = {
+      search: async () => ({
+        status: "OK",
+        results: [
+          {
+            id: "law-meta",
+            source: "국가법령정보 공동활용 Open API",
+            sourceType: "administrative_rule",
+            title: "API 정식 제목",
+            summary: "2",
+            date: "2026-01-02",
+            status: "unknown",
+            verified: true,
+            retrievedAt: "2026-08-27T02:33:38.017Z",
+            documentId: "law-meta",
+          },
+        ],
+        errors: [],
+      }),
+      getDetail: async () => ({ status: "NOT_FOUND", results: [], errors: [] }),
+      listAllAdministrativeRules: async () => ({
+        status: "OK",
+        results: [
+          {
+            id: "law-meta",
+            source: "국가법령정보 공동활용 Open API",
+            sourceType: "administrative_rule",
+            title: "API 정식 제목",
+            summary: "2",
+            date: "2026-01-02",
+            status: "unknown",
+            verified: true,
+            retrievedAt: "2026-08-27T02:33:38.017Z",
+            documentId: "law-meta",
+          },
+        ],
+        errors: [],
+      }),
+    }
+    const metadataItem = catalog.items[1]
+    if (metadataItem === undefined) throw new Error("metadata fixture is missing")
+    const metadataCatalog = {
+      ...catalog,
+      items: [metadataItem],
+    }
+
+    // When
+    const report = await auditDapaCatalogCoverage(metadataCatalog, law)
+
+    // Then
+    expect(report.items[0]).toMatchObject({
+      status: "title_variant",
+      matchedDocumentIds: ["law-meta"],
+    })
+  })
 })

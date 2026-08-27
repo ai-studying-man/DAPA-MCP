@@ -101,8 +101,10 @@ export function selectDapaLegalMatches(
   const title = normalizeSearchText(item.title)
   const titleMatches = results.filter((result) => normalizeSearchText(result.title) === title)
   if (item.kind === "law") return titleMatches
-  const metadataMatches = titleMatches.filter(
-    (result) => result.summary === item.promulgationNumber && result.date === item.promulgationDate,
+  const metadataMatches = results.filter(
+    (result) =>
+      result.date === item.promulgationDate &&
+      matchesPromulgationNumber(result.summary, item.promulgationNumber),
   )
   return metadataMatches.length > 0 ? metadataMatches : titleMatches
 }
@@ -119,15 +121,27 @@ export function selectDapaLegalCandidates(
     .filter(({ score }) => score >= 0.76)
   const metadataCandidates =
     item.kind === "admin_rule"
-      ? candidates.filter(
-          ({ result }) =>
-            result.summary === item.promulgationNumber && result.date === item.promulgationDate,
-        )
+      ? results
+          .filter(
+            (result) =>
+              result.date === item.promulgationDate &&
+              matchesPromulgationNumber(result.summary, item.promulgationNumber),
+          )
+          .map((result) => ({ result, score: titleSimilarity(item.title, result.title) }))
       : candidates
   const pool =
     metadataCandidates.length > 0 ? metadataCandidates : item.kind === "law" ? candidates : []
   const bestScore = Math.max(...pool.map(({ score }) => score), 0)
   return pool.filter(({ score }) => score === bestScore).map(({ result }) => result)
+}
+
+function matchesPromulgationNumber(summary: string | undefined, expected: string): boolean {
+  if (summary === undefined) return false
+  const normalizedExpected = normalizeSearchText(expected)
+  return summary
+    .split(/[,/\s]+/u)
+    .map(normalizeSearchText)
+    .some((candidate) => candidate === normalizedExpected)
 }
 
 function titleSimilarity(left: string, right: string): number {

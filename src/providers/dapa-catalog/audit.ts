@@ -169,12 +169,17 @@ function classifyItem(
     (candidate) => normalizeSearchText(candidate.title) === normalizeSearchText(item.title),
   )
   const matches = selectDapaLegalMatches(item, result.results)
-  if (matches.length > 0)
+  if (matches.length > 0) {
+    const metadataOnly = item.kind === "admin_rule" && titleMatches.length === 0
     return {
       ...base,
-      status: "matched",
+      status: metadataOnly ? "title_variant" : "matched",
       matchedDocumentIds: matches.map((match) => match.documentId),
+      ...(metadataOnly
+        ? { reason: "발령번호·발령일자는 일치하지만 API canonical 제목이 다릅니다" }
+        : {}),
     }
+  }
   if (titleMatches.length > 0) {
     return {
       ...base,

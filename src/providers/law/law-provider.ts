@@ -160,18 +160,24 @@ export class LawProvider {
     if (target === undefined)
       return unavailable("PROVIDER_NOT_CONFIGURED", "행정규칙 API가 설정되지 않았습니다")
     try {
-      for (let page = 1; page <= 100; page += 1) {
-        const text = await this.http.get("lawSearch.do", {
-          OC: this.config.apiKey ?? "",
-          target: target.target,
-          type: "JSON",
-          query: " ",
-          display: String(pageSize),
-          page: String(page),
-        })
-        const parsed = parseLawSearchResponse(text, target, new Date().toISOString())
-        collected.push(...parsed.results)
-        if (collected.length >= parsed.totalCount || parsed.results.length < pageSize) break
+      for (const nw of ["1", "2"]) {
+        let categoryCount = 0
+        for (let page = 1; page <= 100; page += 1) {
+          const text = await this.http.get("lawSearch.do", {
+            OC: this.config.apiKey ?? "",
+            target: target.target,
+            type: "JSON",
+            query: " ",
+            display: String(pageSize),
+            page: String(page),
+            org: "1690000",
+            nw,
+          })
+          const parsed = parseLawSearchResponse(text, target, new Date().toISOString())
+          collected.push(...parsed.results)
+          categoryCount += parsed.results.length
+          if (categoryCount >= parsed.totalCount || parsed.results.length < pageSize) break
+        }
       }
     } catch (error) {
       if (!(error instanceof Error)) return unavailable("INTERNAL_ERROR", "알 수 없는 내부 오류")
