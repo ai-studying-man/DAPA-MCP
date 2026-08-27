@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "id": "term-ipt",
+      "name": "통합사업관리팀",
+      "aliases": ["IPT", "Integrated Project Team", "통합사업관리", "통합관리사업팀"],
+      "category": "terminology",
+      "description": "소요결정 이후 선행연구부터 사업 종결까지 방위력개선사업의 제반 업무를 관리하는 사업 중심 조직입니다.",
+      "practicalMeaning": "계획·예산·계약·원가·기술·품질 분야 인력이 함께 사업 전 과정을 관리하며, 사업에 관한 권한과 책임이 집중되는 실무 중심축입니다.",
+      "relatedTerms": ["선행연구", "사업추진기본전략", "체계개발", "양산"],
+      "relatedOrganizations": ["방위사업청", "국방과학연구소", "국방기술품질원"],
+      "relatedLaws": ["방위사업법", "방위사업관리규정"],
+      "mission": [],
+      "source": "방위사업청 사업관리 안내",
+      "sourceUrl": "https://www.dapa.go.kr/dapa/page/selectPage.do?menuSeq=3209&pageSeq=3195",
+      "lastVerifiedAt": "2026-08-27",
+      "verified": true
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "dapa-mcp",
+  "version": "0.1.0",
+  "description": "공식 출처 기반 대한민국 방위사업 업무 지원 MCP 서버",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "dapa-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/index.js",
+    "test": "npm run build && vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "sync:dapa-catalog": "npm run build && node scripts/sync-dapa-catalog.mjs",
+    "audit:dapa-catalog": "npm run build && node scripts/audit-dapa-catalog.mjs",
+    "sync:dapa-policy": "npm run build && node scripts/sync-dapa-policy.mjs",
+    "backtest:law-api": "npm run build && node scripts/backtest-law-apis.mjs",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "cheerio": "^1.1.2",
+    "kordoc": "2.5.2",
+    "ky": "^2.0.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.10",
+    "@types/node": "^24.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  },
+  "license": "MIT",
+  "private": true
+}

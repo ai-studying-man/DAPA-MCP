@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.env
+*.log
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+.omo/
+.live-catalog-audit-output.json

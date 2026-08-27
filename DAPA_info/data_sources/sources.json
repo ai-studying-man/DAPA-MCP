@@ -1,0 +1,18 @@
+{
+  "sources": [
+    {
+      "id": "law-open-data",
+      "name": "국가법령정보 공동활용 Open API",
+      "organization": "법제처",
+      "url": "https://open.law.go.kr/LSO/openApi/openApiManual.do",
+      "enabled": true
+    },
+    {
+      "id": "dapa-public-website",
+      "name": "방위사업청 공식 홈페이지",
+      "organization": "방위사업청",
+      "url": "https://www.dapa.go.kr",
+      "enabled": true
+    }
+  ]
+}

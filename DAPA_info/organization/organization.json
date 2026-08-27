@@ -1,0 +1,43 @@
+{
+  "items": [
+    {
+      "id": "org-dapa",
+      "name": "방위사업청",
+      "aliases": ["방사청", "DAPA", "Defense Acquisition Program Administration"],
+      "category": "organization",
+      "description": "방위력개선사업 수행, 군수품 조달, 방위산업 육성 업무를 소관하는 중앙행정기관입니다.",
+      "relatedTerms": ["방위력개선사업", "군수품 조달", "방위산업"],
+      "relatedOrganizations": ["국방부", "합동참모본부", "각 군"],
+      "relatedLaws": ["방위사업법"],
+      "parentOrganization": "대한민국 정부",
+      "mission": ["방위력개선사업 수행", "군수품 조달", "방위산업 육성"],
+      "source": "방위사업청 설립목적과 기능",
+      "sourceUrl": "https://dapa.go.kr/dapa/page/selectPage.do?menuSeq=3434&pageSeq=3492",
+      "lastVerifiedAt": "2026-08-27",
+      "verified": true
+    },
+    {
+      "id": "org-ipt",
+      "name": "통합사업관리팀",
+      "aliases": ["IPT", "Integrated Project Team"],
+      "category": "organization",
+      "description": "소요결정 이후 선행연구부터 사업 종결 시까지 사업 추진 관련 제반 업무를 관리합니다.",
+      "relatedTerms": ["선행연구", "사업추진전략", "시험평가", "품질관리"],
+      "relatedOrganizations": ["방위사업청"],
+      "relatedLaws": ["방위사업법", "방위사업관리규정"],
+      "parentOrganization": "방위사업청",
+      "mission": [
+        "선행연구",
+        "사업추진전략 수립",
+        "중기계획·예산 요구",
+        "개발·시험평가 관리",
+        "계약·협상 조정",
+        "양산 관리"
+      ],
+      "source": "방위사업청 사업관리 안내",
+      "sourceUrl": "https://www.dapa.go.kr/dapa/page/selectPage.do?menuSeq=3209&pageSeq=3195",
+      "lastVerifiedAt": "2026-08-27",
+      "verified": true
+    }
+  ]
+}

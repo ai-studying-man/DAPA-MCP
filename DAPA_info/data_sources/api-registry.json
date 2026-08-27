@@ -1,0 +1,37 @@
+{
+  "apis": [
+    {
+      "id": "law-open-data",
+      "name": "국가법령정보 공동활용 Open API",
+      "provider": "law.go.kr",
+      "enabled": true,
+      "authentication": "OC",
+      "baseUrl": "https://www.law.go.kr/DRF",
+      "categories": [
+        "pre_consultation_opinion",
+        "central_ministry_interpretation",
+        "legal_knowledge_base",
+        "customized",
+        "legal_term",
+        "attachment_form",
+        "treaty",
+        "constitutional_case",
+        "interpretation",
+        "administrative_appeal",
+        "law",
+        "administrative_rule",
+        "local_ordinance",
+        "precedent"
+      ]
+    },
+    {
+      "id": "dapa-defense-standard",
+      "name": "국방표준종합서비스",
+      "provider": "data.go.kr",
+      "enabled": false,
+      "authentication": "serviceKey",
+      "baseUrl": "",
+      "categories": ["defense_standard"]
+    }
+  ]
+}
