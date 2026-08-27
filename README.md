@@ -52,16 +52,17 @@ npm run sync:dapa-catalog
 ```
 
 카탈로그의 각 항목을 국가법령정보 공동활용 Open API의 현행 검색 결과와 대조해
-미매칭 목록을 만들려면 `LAW_API_OC`를 일시적으로 전달해 다음 명령을 실행한다.
+미매칭 목록을 만들려면 다음 명령을 실행한다. 개발용 스크립트에는 공개 기본 인증값을
+명시적으로 전달한다.
 
 ```bash
-LAW_API_OC=YOUR_OC npm run audit:dapa-catalog
+LAW_API_OC=dusgh4847 npm run audit:dapa-catalog
 ```
 
-PowerShell에서는 인증값을 현재 프로세스에만 적용해 다음처럼 실행한다.
+PowerShell에서는 다음처럼 실행한다.
 
 ```powershell
-$env:LAW_API_OC = "YOUR_OC"
+$env:LAW_API_OC = "dusgh4847"
 npm run audit:dapa-catalog
 Remove-Item Env:LAW_API_OC
 ```
@@ -93,14 +94,14 @@ npm run sync:dapa-policy
 사용하며, 환경변수로 교체할 수 있다.
 
 ```bash
-LAW_API_OC=YOUR_OC npm run backtest:law-api
+LAW_API_OC=dusgh4847 npm run backtest:law-api
 ```
 
 ## 환경변수
 
 | 이름 | 필수 | 기본값 | 설명 |
 |---|---:|---:|---|
-| `LAW_API_OC` | 법령 조회 시 | 없음 | 국가법령정보 공동활용 인증값 |
+| `LAW_API_OC` | 아니오 | `dusgh4847` | 국가법령정보 공동활용 공개 기본 인증값; 별도 값으로 재정의 가능 |
 | `LAW_API_TIMEOUT_MS` | 아니오 | `10000` | 요청 timeout |
 | `LAW_API_RETRY_LIMIT` | 아니오 | `2` | 429/5xx 재시도 상한 |
 | `LAW_API_CACHE_TTL_MS` | 아니오 | `300000` | API 검색 캐시 TTL(밀리초), `0`이면 캐시 비활성화 |
@@ -109,17 +110,14 @@ LAW_API_OC=YOUR_OC npm run backtest:law-api
 | `LAW_API_MAX_TOOL_RESPONSE_CHARS` | 아니오 | `250000` | 법령 API MCP 도구의 JSON 출력 최대 문자 수 |
 | `DAPA_INFO_PATH` | 아니오 | `./DAPA_info` | 공개지식 루트 |
 
-인증값은 코드, URL 로그, `DAPA_info`에 저장하지 않는다. `.env`는 Git에서 제외된다.
+기본 인증값 `dusgh4847`은 누구나 바로 사용할 수 있도록 코드와 문서에 공개한다. 별도
+인증값을 사용하려면 `LAW_API_OC`로 재정의한다. `.env`는 Git에서 제외된다.
 
 ### 국가법령정보 API 설정
 
-1. [법제처 국가법령정보 공동활용](https://open.law.go.kr/LSO/openApi/openApiManual.do)에서
-   API 이용 신청과 인증값을 확인한다.
-2. MCP Client가 서버를 시작할 때 `LAW_API_OC` 환경변수를 전달한다.
-3. `source_health`에서 `law: healthy`를 확인한다.
-
-키가 없으면 서버는 계속 실행되고 DAPA_info 도구도 동작하지만 법령 Provider는
-`not_configured`이며 법령 조회 결과는 `AUTH_REQUIRED`다.
+별도 인증 절차 없이 기본 인증값으로 법령 API를 사용할 수 있다. 자체 인증값이 있으면
+MCP Client가 서버를 시작할 때 `LAW_API_OC` 환경변수로 전달하고, `source_health`에서
+`law: healthy`를 확인한다.
 
 ## MCP 도구
 
@@ -192,7 +190,7 @@ DAPA 카탈로그는 공식 홈페이지의 범위·분류·발령 메타데이�
 현재 Codex CLI의 로컬 stdio 등록 명령은 다음 형태다.
 
 ```bash
-codex mcp add dapa-mcp --env LAW_API_OC=YOUR_OC -- node "/absolute/path/to/DAPA MCP/dist/index.js"
+codex mcp add dapa-mcp -- node "/absolute/path/to/DAPA MCP/dist/index.js"
 codex mcp list
 ```
 
@@ -201,7 +199,7 @@ codex mcp list
 [Claude Code 공식 MCP 문서](https://code.claude.com/docs/en/mcp)의 stdio 형식을 사용한다.
 
 ```bash
-claude mcp add --transport stdio --env LAW_API_OC=YOUR_OC dapa-mcp -- \
+claude mcp add --transport stdio dapa-mcp -- \
   node "/absolute/path/to/DAPA MCP/dist/index.js"
 claude mcp list
 ```
@@ -220,7 +218,6 @@ v0.1.0은 `.mcpb` 패키지를 제공하지 않으므로 개발 중에는 Claude
     "dapa-mcp": {
       "command": "node",
       "args": ["/absolute/path/to/DAPA MCP/dist/index.js"],
-      "env": { "LAW_API_OC": "$LAW_API_OC" },
       "timeout": 30000,
       "trust": false
     }

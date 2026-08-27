@@ -57,6 +57,21 @@ describe("DAPA MCP stdio", () => {
     expect(response.tools.map((tool) => tool.name).sort()).toEqual(expected.sort())
   })
 
+  it("reports the law provider as healthy when LAW_API_OC is omitted", async () => {
+    // Given
+    const request = { name: "source_health", arguments: {} }
+
+    // When
+    const response = CallToolResultSchema.parse(await client.callTool(request))
+    const text = response.content.find((item) => item.type === "text")
+    const parsed = z
+      .object({ law: z.literal("healthy") })
+      .parse(JSON.parse(text?.type === "text" ? text.text : "{}"))
+
+    // Then
+    expect(parsed.law).toBe("healthy")
+  })
+
   it("retrieves synchronized work-policy content through stdio", async () => {
     // Given
     const searchRequest = {
@@ -105,34 +120,7 @@ describe("DAPA MCP stdio", () => {
     expect(text?.type === "text" ? text.text : "").toContain("방위사업관리규정")
   })
 
-  it("preserves the law API authentication error for DAPA content binding", async () => {
-    // Given
-    const request = {
-      name: "get_dapa_legal_content",
-      arguments: { id: "admin-rule:625652" },
-    }
-
-    // When
-    const response = CallToolResultSchema.parse(await client.callTool(request))
-    const text = response.content.find((item) => item.type === "text")
-
-    // Then
-    expect(text?.type === "text" ? text.text : "").toContain("AUTH_REQUIRED")
-  })
-
-  it("exposes an explicit authentication error for history without an OC", async () => {
-    // Given
-    const request = { name: "get_legal_history", arguments: { lawName: "방위사업법" } }
-
-    // When
-    const response = CallToolResultSchema.parse(await client.callTool(request))
-    const text = response.content.find((item) => item.type === "text")
-
-    // Then
-    expect(text?.type === "text" ? text.text : "").toContain("AUTH_REQUIRED")
-  })
-
-  it("lists the on-demand official legal API catalog without an OC", async () => {
+  it("lists the on-demand official legal API catalog without an explicit OC", async () => {
     // Given
     const request = { name: "list_legal_apis", arguments: {} }
 
@@ -148,23 +136,5 @@ describe("DAPA MCP stdio", () => {
     expect(parsed.categories.map((category) => category.id)).toContain(
       "central_ministry_interpretation",
     )
-  })
-
-  it("calls the legal body resolver through stdio", async () => {
-    // Given
-    const request = {
-      name: "get_legal_api_body",
-      arguments: {
-        apiId: "central_ministry_interpretation.dapa_list",
-        documentId: "409840",
-      },
-    }
-
-    // When
-    const response = CallToolResultSchema.parse(await client.callTool(request))
-    const text = response.content.find((item) => item.type === "text")
-
-    // Then
-    expect(text?.type === "text" ? text.text : "").toContain("AUTH_REQUIRED")
   })
 })
