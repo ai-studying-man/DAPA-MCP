@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
-import { resolve } from "node:path"
+import { existsSync } from "node:fs"
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod"
 import { createDapaServer } from "./server/create-server.js"
@@ -32,11 +34,13 @@ const EnvironmentSchema = z.object({
 })
 
 async function main(): Promise<void> {
+  loadDotEnv()
   const environment = EnvironmentSchema.parse(process.env)
+  const dapaInfoPath = resolveDapaInfoPath(environment.DAPA_INFO_PATH)
   const server = await createDapaServer({
-    dapaInfoPath: resolve(process.cwd(), environment.DAPA_INFO_PATH),
-    dapaCatalogPath: resolve(process.cwd(), environment.DAPA_INFO_PATH, "legal", "catalog.json"),
-    dapaPolicyPath: resolve(process.cwd(), environment.DAPA_INFO_PATH, "policy", "catalog.json"),
+    dapaInfoPath,
+    dapaCatalogPath: resolve(dapaInfoPath, "legal", "catalog.json"),
+    dapaPolicyPath: resolve(dapaInfoPath, "policy", "catalog.json"),
     law: {
       apiKey: environment.LAW_API_OC,
       timeoutMs: environment.LAW_API_TIMEOUT_MS,
@@ -48,6 +52,19 @@ async function main(): Promise<void> {
     maxLawApiToolResponseChars: environment.LAW_API_MAX_TOOL_RESPONSE_CHARS,
   })
   await server.connect(new StdioServerTransport())
+}
+
+function loadDotEnv(): void {
+  const envPath = resolve(process.cwd(), ".env")
+  if (existsSync(envPath)) process.loadEnvFile(envPath)
+}
+
+function resolveDapaInfoPath(configuredPath: string): string {
+  const workingDirectoryPath = resolve(process.cwd(), configuredPath)
+  if (existsSync(workingDirectoryPath)) return workingDirectoryPath
+
+  const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+  return resolve(packageRoot, configuredPath)
 }
 
 void main().catch((error: unknown) => {
