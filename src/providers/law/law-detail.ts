@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { DapaError } from "../../lib/errors/dapa-error.js"
 import type { DapaSearchResult, LegalDocumentDetail } from "../../types/results.js"
+import { sanitizeApiData } from "./law-api-sanitize.js"
 import { parseLegalDocumentDetail } from "./legal-document.js"
 import type { LawTargetConfig } from "./target-config.js"
 
@@ -37,7 +38,7 @@ export function parseLawDetailDocument(
       cause: error,
     })
   }
-  const detail = DetailSchema.safeParse(parsed)
+  const detail = DetailSchema.safeParse(sanitizeApiData(parsed))
   if (!detail.success || Object.keys(detail.data).length === 0) {
     throw new DapaError(
       "SOURCE_UNAVAILABLE",
@@ -68,6 +69,9 @@ export function parseLawDetailDocument(
         ? administrativeRuleRoot.data
         : (normalizedAdministrativeRule ?? detail.data),
   )
+  if (!hasSubstantiveContent(normalized, detail.data)) {
+    throw new DapaError("SOURCE_UNAVAILABLE", "법제처 상세 응답에 법령 본문이 없습니다")
+  }
   const effectiveDate =
     normalized.basicInfo.effectiveDate ?? formatDate(findString(detail.data, ["시행일자"]))
   const result: DapaSearchResult = {
@@ -84,6 +88,35 @@ export function parseLawDetailDocument(
     documentId,
   }
   return { result, detail: normalized }
+}
+
+function hasSubstantiveContent(
+  detail: LegalDocumentDetail,
+  raw: Readonly<Record<string, unknown>>,
+): boolean {
+  if (
+    detail.articles.length > 0 ||
+    detail.supplementaryProvisions.length > 0 ||
+    detail.annexes.length > 0 ||
+    detail.forms.length > 0 ||
+    detail.amendmentText !== undefined ||
+    detail.amendmentReason !== undefined
+  ) {
+    return true
+  }
+  return containsSubstantiveField(raw)
+}
+
+function containsSubstantiveField(value: unknown, keyName = ""): boolean {
+  if (Array.isArray(value)) return value.some((child) => containsSubstantiveField(child, keyName))
+  const record = DetailSchema.safeParse(value)
+  if (record.success) {
+    return Object.entries(record.data).some(([key, child]) => containsSubstantiveField(child, key))
+  }
+  if (!/(내용|요지|회답|주문|이유|판결|결정|처분)/u.test(keyName)) return false
+  return typeof value === "string" || typeof value === "number"
+    ? String(value).trim().length > 0
+    : value !== null && value !== undefined
 }
 
 function normalizeAdministrativeRule(root: Record<string, unknown>): Record<string, unknown> {

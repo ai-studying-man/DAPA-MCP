@@ -31,11 +31,13 @@ export function parseLawHistoryResponse(
 }
 
 function parseRow(row: string, expected: string): readonly LegalHistoryVersion[] {
-  const link = row.match(/MST=(\d+)[^"']*?(?:&amp;|&)efYd=(\d*)/i)
-  const title = row.match(/<a[^>]*>([^<]+)<\/a>/i)?.[1]?.trim()
-  if (link === null || title === undefined || normalize(title) !== expected) return []
-  const documentId = link[1]
-  const rawEffectiveDate = link[2]
+  const anchor = row.match(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i)
+  if (anchor === null) return []
+  const href = anchor[1]?.replaceAll("&amp;", "&")
+  const title = anchor[2] === undefined ? undefined : normalize(anchor[2])
+  if (href === undefined || title === undefined || title !== expected) return []
+  const documentId = queryParameter(href, "MST")
+  const rawEffectiveDate = queryParameter(href, "efYd")
   if (documentId === undefined || rawEffectiveDate === undefined) return []
   const dates = [...row.matchAll(/(20\d{2})[.-](\d{1,2})[.-](\d{1,2})/g)]
     .map((match) => {
@@ -62,6 +64,10 @@ function parseRow(row: string, expected: string): readonly LegalHistoryVersion[]
       ...(amendmentType === undefined ? {} : { amendmentType }),
     } satisfies LegalHistoryVersion,
   ]
+}
+
+function queryParameter(href: string, key: string): string | undefined {
+  return href.match(new RegExp(`[?&]${key}=([^&#"']*)`, "i"))?.[1]
 }
 
 function parseTotalCount(html: string): number {

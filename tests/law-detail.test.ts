@@ -20,7 +20,12 @@ describe("LawProvider.getDetail", () => {
       response.end(
         JSON.stringify({
           법령: {
-            기본정보: { 법령명_한글: "방위사업법", 법령ID: "009822", 시행일자: "20260701" },
+            기본정보: {
+              법령명_한글: "방위사업법",
+              법령ID: "009822",
+              시행일자: "20260701",
+              법령상세링크: "https://www.law.go.kr?OC=detail-secret",
+            },
             조문: { 조문단위: [{ 조문번호: "3", 조문제목: "정의" }] },
           },
         }),
@@ -40,6 +45,7 @@ describe("LawProvider.getDetail", () => {
       verified: true,
     })
     expect(result.results[0]?.content).toContain("조문번호")
+    expect(result.results[0]?.content).not.toContain("detail-secret")
     expect(result.detail?.basicInfo.title).toBe("방위사업법")
     expect(result.detail?.articles[0]).toMatchObject({ articleNumber: "3" })
   })
@@ -55,6 +61,27 @@ describe("LawProvider.getDetail", () => {
 
     // When
     const result = await provider.getDetail({ documentId: "missing", sourceType: "law" })
+
+    // Then
+    expect(result.status).toBe("SOURCE_UNAVAILABLE")
+    expect(result.errors[0]?.code).toBe("SOURCE_UNAVAILABLE")
+  })
+
+  it("does not report metadata-only detail as usable body content", async () => {
+    // Given
+    const api = await startFakeLawApi((_request, response) => {
+      response.setHeader("content-type", "application/json")
+      response.end(
+        JSON.stringify({
+          법령: { 기본정보: { 법령명_한글: "방위사업법", 법령ID: "123" } },
+        }),
+      )
+    })
+    openApis.push(api)
+    const provider = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+    // When
+    const result = await provider.getDetail({ documentId: "123", sourceType: "law" })
 
     // Then
     expect(result.status).toBe("SOURCE_UNAVAILABLE")

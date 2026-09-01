@@ -96,6 +96,69 @@ describe("law API body resolution", () => {
     expect(JSON.stringify(result)).not.toContain("OC=secret-value")
   })
 
+  it("rejects an HTML permission page returned from an attachment link", async () => {
+    // Given
+    const api = await startFakeLawApi((_request, response) => {
+      response.setHeader("content-type", "text/html; charset=utf-8")
+      response.end("<html><body>접근 권한이 없습니다</body></html>")
+    })
+    openApis.push(api)
+    const provider = new LawApiProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+    // When
+    const result = await provider.resolveBody({
+      apiId: "attachment_form.law_list",
+      attachmentUrl: "/flDownload.do?flSeq=5",
+    })
+
+    // Then
+    expect(result.status).toBe("SOURCE_UNAVAILABLE")
+    expect(result.data).toEqual({})
+  })
+
+  it("preserves legitimate plain-text content containing the word error", async () => {
+    // Given
+    const api = await startFakeLawApi((_request, response) => {
+      response.setHeader("content-type", "text/plain; charset=utf-8")
+      response.end("사용자 오류 시 관리자에게 알려주세요")
+    })
+    openApis.push(api)
+    const provider = new LawApiProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+    // When
+    const result = await provider.resolveBody({
+      apiId: "attachment_form.law_list",
+      attachmentUrl: "/flDownload.do?flSeq=7",
+    })
+
+    // Then
+    expect(result.status).toBe("OK")
+    expect(result.data).toMatchObject({
+      attachment: { content: "사용자 오류 시 관리자에게 알려주세요" },
+    })
+  })
+
+  it("rejects a successfully parsed attachment with empty body text", async () => {
+    // Given
+    const hwpx = await markdownToHwpx("")
+    const api = await startFakeLawApi((_request, response) => {
+      response.setHeader("content-type", "application/octet-stream")
+      response.end(Buffer.from(hwpx))
+    })
+    openApis.push(api)
+    const provider = new LawApiProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+    // When
+    const result = await provider.resolveBody({
+      apiId: "attachment_form.law_list",
+      attachmentUrl: "/flDownload.do?flSeq=6",
+    })
+
+    // Then
+    expect(result.status).toBe("SOURCE_UNAVAILABLE")
+    expect(result.data).toEqual({})
+  })
+
   it("rejects redirects from an official attachment path", async () => {
     // Given
     const api = await startFakeLawApi((request, response) => {

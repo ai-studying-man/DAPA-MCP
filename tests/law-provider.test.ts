@@ -339,6 +339,48 @@ describe("LawProvider", () => {
     expect(result.versions.map((version) => version.documentId)).toEqual(["281867", "225201"])
   })
 
+  it("parses history links when effective date precedes document ID", async () => {
+    // Given
+    const api = await startFakeLawApi((_request, response) => {
+      response.setHeader("content-type", "text/html")
+      response.end(`
+        <html><strong>1</strong> 건
+          <table>
+            <tr><td>2021.01.01</td><td><a href="/DRF/lawService.do?efYd=20210101&amp;MST=225201"><span>방위사업법</span></a></td></tr>
+          </table>
+        </html>
+      `)
+    })
+    openApis.push(api)
+    const provider = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+    // When
+    const result = await provider.getHistory({ lawName: "방위사업법", limit: 10 })
+
+    // Then
+    expect(result.status).toBe("OK")
+    expect(result.totalCount).toBe(1)
+    expect(result.versions[0]?.documentId).toBe("225201")
+  })
+
+  it("reports source unavailable when history count is nonzero but rows are unparseable", async () => {
+    // Given
+    const api = await startFakeLawApi((_request, response) => {
+      response.setHeader("content-type", "text/html")
+      response.end("<html><strong>2</strong> 건<table><tr><td>불완전한 행</td></tr></table></html>")
+    })
+    openApis.push(api)
+    const provider = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+    // When
+    const result = await provider.getHistory({ lawName: "방위사업법", limit: 10 })
+
+    // Then
+    expect(result.status).toBe("SOURCE_UNAVAILABLE")
+    expect(result.totalCount).toBe(2)
+    expect(result.errors[0]?.code).toBe("SOURCE_UNAVAILABLE")
+  })
+
   it("reports an unconfigured key without making a request", async () => {
     // Given
     const provider = new LawProvider({})

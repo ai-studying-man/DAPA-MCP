@@ -6,9 +6,9 @@ import type {
   SearchResponse,
   SourceType,
 } from "../../types/results.js"
-import { parseLawHistoryResponse } from "./history.js"
 import { sanitizeUrlString } from "./law-api-sanitize.js"
 import { parseLawDetailDocument } from "./law-detail.js"
+import { fetchLawHistory } from "./law-history-provider.js"
 import { LawHttpClient } from "./law-http.js"
 import { parseLawSearchResponse } from "./law-response.js"
 import { getTargetConfig, type LawTargetConfig } from "./target-config.js"
@@ -116,41 +116,7 @@ export class LawProvider {
         errors: [{ code: "AUTH_REQUIRED", message: "LAW_API_OC 환경변수가 설정되지 않았습니다" }],
       }
     }
-    try {
-      const text = await this.http.get("lawSearch.do", {
-        OC: this.config.apiKey ?? "",
-        target: "lsHistory",
-        type: "HTML",
-        query: input.lawName,
-        display: String(Math.min(input.limit ?? 20, 100)),
-        sort: "efdes",
-      })
-      const parsed = parseLawHistoryResponse(text, input.lawName, input.limit ?? 20)
-      return {
-        status: parsed.versions.length > 0 ? "OK" : "NOT_FOUND",
-        lawName: input.lawName,
-        totalCount: parsed.totalCount,
-        versions: parsed.versions,
-        errors: [],
-      }
-    } catch (error) {
-      if (!(error instanceof Error)) {
-        return {
-          status: "SOURCE_UNAVAILABLE",
-          lawName: input.lawName,
-          totalCount: 0,
-          versions: [],
-          errors: [{ code: "INTERNAL_ERROR", message: "알 수 없는 내부 오류" }],
-        }
-      }
-      return {
-        status: "SOURCE_UNAVAILABLE",
-        lawName: input.lawName,
-        totalCount: 0,
-        versions: [],
-        errors: [toErrorShape(error)],
-      }
-    }
+    return fetchLawHistory(this.http, this.config.apiKey ?? "", input)
   }
 
   async listAllAdministrativeRules(): Promise<SearchResponse> {

@@ -31,6 +31,12 @@ export async function retrieveLawApiAttachment(
     const content = resource.contentType.startsWith("text/html")
       ? load(rawText).root().text().replace(/\s+/g, " ").trim()
       : rawText
+    if (
+      content.trim().length === 0 ||
+      (resource.contentType.startsWith("text/html") && isAttachmentErrorText(content))
+    ) {
+      throw new DapaError("SOURCE_UNAVAILABLE", "별표·서식 다운로드 응답에 본문이 없습니다")
+    }
     return {
       fileType: "text",
       contentType: resource.contentType,
@@ -46,6 +52,9 @@ export async function retrieveLawApiAttachment(
       `별표·서식 원문을 텍스트로 변환할 수 없습니다: ${parsed.error}`,
     )
   }
+  if (parsed.markdown.trim().length === 0) {
+    throw new DapaError("SOURCE_UNAVAILABLE", "별표·서식 원문에 본문이 없습니다")
+  }
   return {
     fileType: parsed.fileType,
     contentType: resource.contentType,
@@ -53,6 +62,10 @@ export async function retrieveLawApiAttachment(
     sourceUrl: sanitizeUrlString(url.toString()),
     ...(parsed.pageCount === undefined ? {} : { pageCount: parsed.pageCount }),
   }
+}
+
+function isAttachmentErrorText(value: string): boolean {
+  return /(접근\s*권한|권한이\s*없|not\s+found|login)/iu.test(value)
 }
 
 function resolveAttachmentUrl(siteBaseUrl: URL, value: string): URL {
