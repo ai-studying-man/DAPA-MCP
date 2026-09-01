@@ -7,6 +7,7 @@ import { LawApiProvider } from "../providers/law/law-api-provider.js"
 import type { LawProviderConfig } from "../providers/law/law-provider.js"
 import { LawProvider } from "../providers/law/law-provider.js"
 import { registerTools } from "../tools/register-tools.js"
+import { DAPA_MCP_INSTRUCTIONS } from "./instructions.js"
 
 export type ServerConfig = {
   readonly dapaInfoPath: string
@@ -17,7 +18,10 @@ export type ServerConfig = {
 }
 
 export async function createDapaServer(config: ServerConfig): Promise<McpServer> {
-  const server = new McpServer({ name: "dapa-mcp", version: "0.1.0" })
+  const server = new McpServer(
+    { name: "dapa-mcp", version: "0.1.0" },
+    { instructions: DAPA_MCP_INSTRUCTIONS },
+  )
   const dapaInfo = await loadDapaInfoProvider(config.dapaInfoPath)
   const dapaCatalog = await loadDapaCatalogProvider(config.dapaCatalogPath)
   const dapaPolicy = await loadDapaPolicyProvider(config.dapaPolicyPath)

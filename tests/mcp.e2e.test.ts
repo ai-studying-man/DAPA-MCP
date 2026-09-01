@@ -57,6 +57,18 @@ describe("DAPA MCP stdio", () => {
     expect(response.tools.map((tool) => tool.name).sort()).toEqual(expected.sort())
   })
 
+  it("publishes server instructions during initialization", () => {
+    // Given
+    const connectedClient = client
+
+    // When
+    const instructions = connectedClient.getInstructions()
+
+    // Then
+    expect(instructions).toEqual(expect.any(String))
+    expect(instructions?.length).toBeGreaterThan(0)
+  })
+
   it("reports the law provider as healthy when LAW_API_OC is omitted", async () => {
     // Given
     const request = { name: "source_health", arguments: {} }
