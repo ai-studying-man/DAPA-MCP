@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
+  "buildCommand": "",
   "functions": {
     "api/mcp.ts": {
       "includeFiles": "DAPA_info/**",
