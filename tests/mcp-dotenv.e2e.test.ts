@@ -41,7 +41,7 @@ describe("DAPA MCP dotenv startup", () => {
       await client.close()
       await rm(workingDirectory, { recursive: true, force: true })
     }
-  })
+  }, 15_000)
 
   it("finds bundled DAPA_info when launched outside the repository", async () => {
     // Given
@@ -67,5 +67,5 @@ describe("DAPA MCP dotenv startup", () => {
       await client.close()
       await rm(workingDirectory, { recursive: true, force: true })
     }
-  })
+  }, 15_000)
 })

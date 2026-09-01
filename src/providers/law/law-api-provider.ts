@@ -51,10 +51,12 @@ export class LawApiProvider {
     const baseUrl = config.baseUrl ?? "https://www.law.go.kr/DRF"
     this.http = new LawHttpClient({
       baseUrl,
-      timeoutMs: config.timeoutMs ?? 10_000,
+      timeoutMs: config.timeoutMs ?? 55_000,
       retryLimit: config.retryLimit ?? 2,
       maxTextResponseBytes: config.maxTextResponseBytes ?? 8 * 1024 * 1024,
       maxResourceResponseBytes: config.maxResourceResponseBytes ?? 25 * 1024 * 1024,
+      ...(config.referer === undefined ? {} : { referer: config.referer }),
+      ...(config.userAgent === undefined ? {} : { userAgent: config.userAgent }),
     })
     this.cache = new TtlCache(config.cacheTtlMs ?? 300_000)
     const siteBaseUrl = new URL(`${new URL(baseUrl).origin}/`)

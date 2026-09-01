@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "functions": {
+    "api/mcp.ts": {
+      "includeFiles": "DAPA_info/**",
+      "maxDuration": 60,
+      "supportsCancellation": true
+    }
+  },
+  "rewrites": [
+    { "source": "/law", "destination": "/api/mcp" },
+    { "source": "/mcp", "destination": "/api/mcp" },
+    { "source": "/health", "destination": "/api/health" }
+  ]
+}

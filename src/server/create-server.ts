@@ -17,24 +17,42 @@ export type ServerConfig = {
   readonly maxLawApiToolResponseChars: number
 }
 
-export async function createDapaServer(config: ServerConfig): Promise<McpServer> {
-  const server = new McpServer(
-    { name: "dapa-mcp", version: "0.1.0" },
-    { instructions: DAPA_MCP_INSTRUCTIONS },
-  )
+export type DapaServerDependencies = {
+  readonly law: LawProvider
+  readonly lawApi: LawApiProvider
+  readonly dapaInfo: Awaited<ReturnType<typeof loadDapaInfoProvider>>
+  readonly dapaCatalog: Awaited<ReturnType<typeof loadDapaCatalogProvider>>
+  readonly dapaPolicy: Awaited<ReturnType<typeof loadDapaPolicyProvider>>
+  readonly citations: CitationVerifier
+  readonly maxLawApiToolResponseChars: number
+}
+
+export async function loadDapaServerDependencies(
+  config: ServerConfig,
+): Promise<DapaServerDependencies> {
   const dapaInfo = await loadDapaInfoProvider(config.dapaInfoPath)
   const dapaCatalog = await loadDapaCatalogProvider(config.dapaCatalogPath)
   const dapaPolicy = await loadDapaPolicyProvider(config.dapaPolicyPath)
   const law = new LawProvider(config.law)
-  const lawApi = new LawApiProvider(config.law)
-  registerTools(server, {
+  return {
     law,
-    lawApi,
+    lawApi: new LawApiProvider(config.law),
     dapaInfo,
     dapaCatalog,
     dapaPolicy,
     citations: new CitationVerifier(law),
     maxLawApiToolResponseChars: config.maxLawApiToolResponseChars,
-  })
+  }
+}
+
+export async function createDapaServer(
+  config: ServerConfig,
+  dependencies?: DapaServerDependencies,
+): Promise<McpServer> {
+  const server = new McpServer(
+    { name: "dapa-mcp", version: "0.1.0" },
+    { instructions: DAPA_MCP_INSTRUCTIONS },
+  )
+  registerTools(server, dependencies ?? (await loadDapaServerDependencies(config)))
   return server
 }

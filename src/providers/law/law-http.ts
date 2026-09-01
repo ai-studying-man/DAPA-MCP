@@ -1,12 +1,17 @@
 import ky, { HTTPError, type KyInstance, TimeoutError } from "ky"
 import { DapaError } from "../../lib/errors/dapa-error.js"
 
+const DEFAULT_REFERER = "https://www.law.go.kr/"
+const DEFAULT_USER_AGENT = "dapa-mcp/0.1 (+https://github.com/ai-studying-man/DAPA-MCP)"
+
 export type LawHttpConfig = {
   readonly baseUrl: string
   readonly timeoutMs: number
   readonly retryLimit: number
   readonly maxTextResponseBytes: number
   readonly maxResourceResponseBytes: number
+  readonly referer?: string
+  readonly userAgent?: string
 }
 
 export type LawHttpResource = {
@@ -23,8 +28,13 @@ export class LawHttpClient {
   constructor(config: LawHttpConfig) {
     this.maxTextResponseBytes = config.maxTextResponseBytes
     this.maxResourceResponseBytes = config.maxResourceResponseBytes
+    const headers = {
+      referer: config.referer ?? DEFAULT_REFERER,
+      "user-agent": config.userAgent ?? DEFAULT_USER_AGENT,
+    }
     this.client = ky.create({
       prefix: config.baseUrl,
+      headers,
       timeout: config.timeoutMs,
       retry: {
         limit: config.retryLimit,
@@ -33,6 +43,7 @@ export class LawHttpClient {
       },
     })
     this.resourceClient = ky.create({
+      headers,
       timeout: config.timeoutMs,
       redirect: "error",
       retry: {
