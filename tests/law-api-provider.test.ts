@@ -47,6 +47,42 @@ describe("law API capability catalog", () => {
 })
 
 describe("LawApiProvider", () => {
+  it("applies a shared temporal scope to law and administrative-rule APIs", async () => {
+    // Given
+    const requests: URL[] = []
+    const api = await startFakeLawApi((request, response) => {
+      requests.push(new URL(request.url ?? "/", "http://localhost"))
+      response.setHeader("content-type", "application/json")
+      response.end(
+        JSON.stringify({
+          LawSearch: { totalCnt: "1", law: { 법령일련번호: "1", 법령명한글: "방위사업법" } },
+        }),
+      )
+    })
+    openApis.push(api)
+    const provider = new LawApiProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+    // When
+    const historical = await provider.query({
+      apiId: "law.list",
+      query: "방위사업법",
+      currentOnly: false,
+      asOfDate: "2020-01-02",
+    })
+    const rules = await provider.query({
+      apiId: "administrative_rule.list",
+      query: "방위사업",
+      currentOnly: false,
+    })
+
+    // Then
+    expect(requests[0]?.searchParams.get("target")).toBe("eflaw")
+    expect(requests[0]?.searchParams.get("efYd")).toBe("20200102~20200102")
+    expect(historical.temporalScope).toBe("as_of")
+    expect(requests[1]?.searchParams.get("nw")).toBe("2")
+    expect(rules.temporalScope).toBe("all")
+  })
+
   it("caches successful DAPA interpretation API responses until forceRefresh", async () => {
     // Given
     let requestCount = 0

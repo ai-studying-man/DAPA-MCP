@@ -175,6 +175,15 @@ MCP 서버는 연결 초기화 때 Codex, Claude 등 지원 클라이언트에 �
 `NOT_FOUND`를 반환한다. `currentOnly` 기본값은 `true`이며, 행정규칙도 명시적인 연혁·폐지
 상태를 제외한다. 과거 자료가 필요하면 `currentOnly: false`를 사용하고, 최신 API 재조회가
 필요하면 `forceRefresh: true`를 사용한다. 성공한 검색 결과의 기본 캐시 TTL은 5분이다.
+`query_legal_api`와 `get_legal_api_body`도 같은 `currentOnly`·`asOfDate` 입력을 사용하며,
+응답의 `temporalScope`로 적용 범위(`current`, `all`, `as_of`, `not_applicable`)를 확인할 수 있다.
+법령·행정규칙 외 구분은 시간 필터가 적용되지 않으면 `not_applicable`로 명시한다.
+
+`search_legal_content`는 입력 문장의 원형·공백 정리·공백 제거 변형을 사용해 최대 2페이지의
+후보를 수집한 뒤 공식 상세 본문을 조회한다. 본문에서 질의가 확인된 결과는 `match: "content"`,
+본문 확인 없이 검색 메타데이터만 일치한 결과는 `match: "metadata"`로 구분하고 본문 일치 결과를
+앞에 배치한다. 한 후보가 여러 국가법령정보 문서와 연결되면 `get_dapa_legal_content`의
+`matches` 배열에 각 문서의 본문을 모두 반환한다.
 
 ### 국가법령정보 API 범위
 

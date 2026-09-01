@@ -121,6 +121,69 @@ describe("DAPA legal content binding", () => {
     expect(response.matchedDocument?.documentId).toBe("rule-1047")
     expect(response.legal?.detail?.articles[0]?.text).toBe("정식 본문")
   })
+
+  it("retrieves every ambiguous API candidate body instead of stopping at the first match", async () => {
+    // Given
+    const catalog = fakeCatalog(catalogItem)
+    const law: LegalContentSource = {
+      search: async () => ({
+        status: "OK",
+        results: [
+          {
+            id: "rule-a",
+            source: "api",
+            sourceType: "administrative_rule",
+            title: catalogItem.title,
+            summary: "981",
+            date: catalogItem.promulgationDate,
+            status: "current",
+            verified: true,
+            retrievedAt: "2026-08-27T02:33:38.017Z",
+            documentId: "rule-a",
+          },
+          {
+            id: "rule-b",
+            source: "api",
+            sourceType: "administrative_rule",
+            title: catalogItem.title,
+            summary: "981",
+            date: catalogItem.promulgationDate,
+            status: "current",
+            verified: true,
+            retrievedAt: "2026-08-27T02:33:38.017Z",
+            documentId: "rule-b",
+          },
+        ],
+        errors: [],
+      }),
+      getDetail: async (input) => ({
+        status: "OK",
+        results: [],
+        detail: {
+          basicInfo: { title: input.documentId },
+          articles: [{ articleNumber: "1", text: input.documentId }],
+          supplementaryProvisions: [],
+          annexes: [],
+          forms: [],
+        },
+        errors: [],
+      }),
+    }
+
+    // When
+    const response = await getDapaLegalContent(catalog, law, catalogItem.id)
+
+    // Then
+    expect(response.status).toBe("OK")
+    expect(response.matches?.map((match) => match.matchedDocument.documentId)).toEqual([
+      "rule-a",
+      "rule-b",
+    ])
+    expect(response.matches?.map((match) => match.legal.detail?.articles[0]?.text)).toEqual([
+      "rule-a",
+      "rule-b",
+    ])
+  })
 })
 
 function fakeCatalog(item: DapaCatalogItem): DapaCatalogProvider {

@@ -7,7 +7,7 @@ import {
   type LawApiConfig,
   type LawApiId,
 } from "./law-api-catalog.js"
-import type { LawApiQueryInput, LawApiQueryResponse } from "./law-api-provider.js"
+import type { LawApiQueryInput, LawApiQueryResponse, TemporalScope } from "./law-api-provider.js"
 import { sanitizeUrlString } from "./law-api-sanitize.js"
 import type { LawHttpClient } from "./law-http.js"
 
@@ -23,6 +23,7 @@ export type LawApiBodyResponse = {
   readonly source: "국가법령정보 공동활용 Open API"
   readonly sourceUrl: string
   readonly retrievedAt: string
+  readonly temporalScope: TemporalScope
   readonly data: Readonly<Record<string, unknown>>
   readonly errors: readonly { readonly code: string; readonly message: string }[]
 }
@@ -56,6 +57,8 @@ export class LawApiBodyResolver {
       ...(input.articleNumber === undefined ? {} : { articleNumber: input.articleNumber }),
       ...(input.limit === undefined ? {} : { limit: input.limit }),
       ...(input.page === undefined ? {} : { page: input.page }),
+      ...(input.currentOnly === undefined ? {} : { currentOnly: input.currentOnly }),
+      ...(input.asOfDate === undefined ? {} : { asOfDate: input.asOfDate }),
       ...(input.forceRefresh === undefined ? {} : { forceRefresh: input.forceRefresh }),
     })
     return {
@@ -66,6 +69,7 @@ export class LawApiBodyResolver {
       source: response.source,
       sourceUrl: response.sourceUrl,
       retrievedAt: response.retrievedAt,
+      temporalScope: response.temporalScope,
       data: response.data,
       errors: response.errors,
     }
@@ -91,6 +95,7 @@ export class LawApiBodyResolver {
         source: "국가법령정보 공동활용 Open API",
         sourceUrl: attachment.sourceUrl,
         retrievedAt,
+        temporalScope: "not_applicable",
         data: { attachment },
         errors: [],
       }
@@ -119,6 +124,7 @@ function failure(
     source: "국가법령정보 공동활용 Open API",
     sourceUrl: `https://www.law.go.kr/DRF/${api.endpoint}?target=${api.target}`,
     retrievedAt,
+    temporalScope: "not_applicable",
     data: {},
     errors: [error],
   }

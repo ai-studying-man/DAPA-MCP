@@ -15,6 +15,7 @@ import {
 import { extractLawApiBodyReferences, type LawApiBodyReference } from "./law-api-references.js"
 import { parseLawApiResponse } from "./law-api-response.js"
 import { sanitizeUrlString } from "./law-api-sanitize.js"
+import { type TemporalRequest, temporalRequest, temporalScopeFor } from "./law-api-temporal.js"
 import { LawHttpClient } from "./law-http.js"
 import type { LawProviderConfig, ProviderHealth } from "./law-provider.js"
 
@@ -26,8 +27,13 @@ export type LawApiQueryInput = {
   readonly articleNumber?: string
   readonly limit?: number
   readonly page?: number
+  readonly currentOnly?: boolean
+  readonly asOfDate?: string
   readonly forceRefresh?: boolean
 }
+
+export const TEMPORAL_SCOPES = ["current", "all", "as_of", "not_applicable"] as const
+export type TemporalScope = (typeof TEMPORAL_SCOPES)[number]
 
 export type LawApiQueryResponse = {
   readonly status: ResponseStatus
@@ -37,6 +43,7 @@ export type LawApiQueryResponse = {
   readonly source: "국가법령정보 공동활용 Open API"
   readonly sourceUrl: string
   readonly retrievedAt: string
+  readonly temporalScope: TemporalScope
   readonly data: Readonly<Record<string, unknown>>
   readonly bodyReferences: readonly LawApiBodyReference[]
   readonly errors: readonly { readonly code: string; readonly message: string }[]
@@ -73,18 +80,40 @@ export class LawApiProvider {
     const api = getLawApiConfig(input.apiId)
     const retrievedAt = new Date().toISOString()
     if (this.health() === "not_configured") {
-      return failure(api, retrievedAt, {
-        code: "AUTH_REQUIRED",
-        message: "LAW_API_OC 환경변수가 설정되지 않았습니다",
-      })
+      return failure(
+        api,
+        retrievedAt,
+        {
+          code: "AUTH_REQUIRED",
+          message: "LAW_API_OC 환경변수가 설정되지 않았습니다",
+        },
+        temporalScopeFor(api, input),
+      )
+    }
+    if (input.asOfDate !== undefined && api.categoryId !== "law") {
+      return failure(
+        api,
+        retrievedAt,
+        {
+          code: "INVALID_ARGUMENT",
+          message: "asOfDate 기준일 조회는 법령 API에서만 지원됩니다",
+        },
+        "not_applicable",
+      )
     }
     const missing = api.requiredInputs.find((name) => inputValue(input, name) === undefined)
     if (missing !== undefined) {
-      return failure(api, retrievedAt, {
-        code: "INVALID_ARGUMENT",
-        message: `${missing} 입력이 필요합니다`,
-      })
+      return failure(
+        api,
+        retrievedAt,
+        {
+          code: "INVALID_ARGUMENT",
+          message: `${missing} 입력이 필요합니다`,
+        },
+        temporalScopeFor(api, input),
+      )
     }
+    const temporal = temporalRequest(api, input)
     const key = apiQueryCacheKey(input)
     if (input.forceRefresh !== true) {
       const cached = this.cache.get(key)
@@ -94,7 +123,7 @@ export class LawApiProvider {
     try {
       const text = await this.http.get(
         api.endpoint,
-        buildSearchParams(api, input, this.config.apiKey ?? ""),
+        buildSearchParams(api, input, this.config.apiKey ?? "", temporal),
       )
       const { data, status } = parseLawApiResponse(text, api)
       const response: LawApiQueryResponse = {
@@ -103,8 +132,9 @@ export class LawApiProvider {
         categoryId: api.categoryId,
         operation: api.operation,
         source: "국가법령정보 공동활용 Open API",
-        sourceUrl: sourceUrl(api),
+        sourceUrl: sourceUrl(api, temporal.target),
         retrievedAt,
+        temporalScope: temporal.scope,
         data,
         bodyReferences: extractLawApiBodyReferences(api, data),
         errors: [],
@@ -132,12 +162,14 @@ function buildSearchParams(
   api: LawApiConfig,
   input: LawApiQueryInput,
   apiKey: string,
+  temporal: TemporalRequest,
 ): Readonly<Record<string, string>> {
   const params: Record<string, string> = {
     OC: apiKey,
-    target: api.target,
+    target: temporal.target,
     type: "JSON",
     ...api.staticParameters,
+    ...temporal.parameters,
   }
   addInput(params, api.inputParameters?.query, input.query)
   addInput(params, api.inputParameters?.documentId, input.documentId)
@@ -159,6 +191,8 @@ function apiQueryCacheKey(input: LawApiQueryInput): string {
     input.articleNumber ?? "",
     input.limit ?? "",
     input.page ?? "",
+    input.currentOnly ?? true,
+    input.asOfDate ?? "",
   ])
 }
 
@@ -189,6 +223,7 @@ function failure(
   api: LawApiConfig,
   retrievedAt: string,
   error: { readonly code: string; readonly message: string },
+  temporalScope: TemporalScope = "not_applicable",
 ): LawApiQueryResponse {
   return {
     status: "SOURCE_UNAVAILABLE",
@@ -196,16 +231,17 @@ function failure(
     categoryId: api.categoryId,
     operation: api.operation,
     source: "국가법령정보 공동활용 Open API",
-    sourceUrl: sourceUrl(api),
+    sourceUrl: sourceUrl(api, api.target),
     retrievedAt,
+    temporalScope,
     data: {},
     bodyReferences: [],
     errors: [error],
   }
 }
 
-function sourceUrl(api: LawApiConfig): string {
-  return `https://www.law.go.kr/DRF/${api.endpoint}?target=${api.target}`
+function sourceUrl(api: LawApiConfig, target: string): string {
+  return `https://www.law.go.kr/DRF/${api.endpoint}?target=${target}`
 }
 
 function toErrorShape(error: Error): { readonly code: string; readonly message: string } {

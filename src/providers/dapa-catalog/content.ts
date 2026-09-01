@@ -23,7 +23,13 @@ export type DapaLegalContentResponse = {
   readonly catalogItem?: DapaCatalogItem
   readonly matchedDocument?: DapaSearchResult
   readonly legal?: SearchResponse
+  readonly matches?: readonly DapaLegalContentMatch[]
   readonly errors: readonly { readonly code: string; readonly message: string }[]
+}
+
+export type DapaLegalContentMatch = {
+  readonly matchedDocument: DapaSearchResult
+  readonly legal: SearchResponse
 }
 
 export async function searchDapaLegalForCatalog(
@@ -73,24 +79,25 @@ export async function getDapaLegalContent(
       errors: [{ code: "NOT_FOUND", message: "국가법령정보 API에서 대응 문서를 찾지 못했습니다" }],
     }
   }
-  if (matches.length > 1) {
-    return {
-      status: "PARTIAL_RESULT",
-      catalogItem,
-      errors: [{ code: "AMBIGUOUS", message: "국가법령정보 API 대응 문서가 여러 건입니다" }],
-    }
-  }
-
-  const matchedDocument = matches[0]
-  if (matchedDocument === undefined) return notFound("국가법령정보 API 대응 문서를 찾지 못했습니다")
-  const detailInput: LegalDetailInput = { documentId: matchedDocument.documentId, sourceType }
-  const legal = await law.getDetail(detailInput)
+  const hydrated = await Promise.all(
+    matches.map(async (matchedDocument): Promise<DapaLegalContentMatch> => {
+      const detailInput: LegalDetailInput = { documentId: matchedDocument.documentId, sourceType }
+      return { matchedDocument, legal: await law.getDetail(detailInput) }
+    }),
+  )
+  const errors = hydrated.flatMap((match) => match.legal.errors)
+  const successful = hydrated.filter((match) => match.legal.status === "OK")
+  const status: ResponseStatus =
+    successful.length === 0 ? "SOURCE_UNAVAILABLE" : errors.length > 0 ? "PARTIAL_RESULT" : "OK"
+  const first = hydrated[0]
+  if (first === undefined) return notFound("국가법령정보 API 대응 문서를 찾지 못했습니다")
   return {
-    status: legal.status,
+    status,
     catalogItem,
-    matchedDocument,
-    legal,
-    errors: legal.errors,
+    matchedDocument: first.matchedDocument,
+    legal: first.legal,
+    matches: hydrated,
+    errors,
   }
 }
 

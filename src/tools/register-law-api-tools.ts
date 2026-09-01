@@ -23,6 +23,8 @@ const QueryLegalApiSchema = {
     .describe("조번호 4자리와 가지번호 2자리"),
   limit: z.number().int().min(1).max(100).default(20),
   page: z.number().int().min(1).default(1),
+  currentOnly: z.boolean().default(true),
+  asOfDate: z.iso.date().optional(),
   forceRefresh: z
     .boolean()
     .default(false)
@@ -95,6 +97,8 @@ export function registerLawApiTools(
         apiId: input.apiId,
         limit: input.limit,
         page: input.page,
+        currentOnly: input.currentOnly,
+        ...(input.asOfDate === undefined ? {} : { asOfDate: input.asOfDate }),
         forceRefresh: input.forceRefresh,
         ...(input.query === undefined ? {} : { query: input.query }),
         ...(input.documentId === undefined ? {} : { documentId: input.documentId }),
@@ -121,6 +125,8 @@ export function registerLawApiTools(
         apiId: input.apiId,
         limit: input.limit,
         page: input.page,
+        currentOnly: input.currentOnly,
+        ...(input.asOfDate === undefined ? {} : { asOfDate: input.asOfDate }),
         forceRefresh: input.forceRefresh,
         ...(input.query === undefined ? {} : { query: input.query }),
         ...(input.documentId === undefined ? {} : { documentId: input.documentId }),
