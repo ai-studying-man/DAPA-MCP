@@ -4,9 +4,9 @@ DAPA MCP는 대한민국 방위사업 업무를 지원하는 읽기 전용 Model
 서버다. LLM의 기억 대신 법제처 국가법령정보 공동활용 Open API와 출처가 표시된
 `DAPA_info`를 조회한다. 핵심 원칙은 `Search → Retrieve → Verify → Compare → Cite → Explain`이다.
 
-> v0.1.0 Core와 법령정보 MCP Parity 1차를 구현한다. 로컬 stdio와 17개 도구,
-> DAPA 공식 법령·행정규칙 카탈로그, 법령 상세 구조화, 연혁 조회, 기준일 검색을 제공한다. Streamable HTTP, 특허,
-> 논문, 뉴스, 공개데이터, 신구조문 비교는 아직 구현하지 않았으며
+> v0.1.0 Core와 법령정보 MCP Parity 1차를 구현한다. 로컬 stdio, Vercel용
+> Streamable HTTP와 17개 도구, DAPA 공식 법령·행정규칙 카탈로그, 법령 상세 구조화,
+> 연혁 조회, 기준일 검색을 제공한다. 특허, 논문, 뉴스, 공개데이터, 신구조문 비교는 아직 구현하지 않았으며
 > [ROADMAP.md](./ROADMAP.md)에 구분되어 있다.
 
 ## 왜 MCP인가
@@ -19,9 +19,9 @@ DAPA MCP는 대한민국 방위사업 업무를 지원하는 읽기 전용 Model
 ## Architecture
 
 ```text
-Claude / Gemini / Codex / MCP Client
-                  │ stdio
-                  ▼
+ChatGPT / Claude Web-compatible MCP client ── HTTPS /law ─┐
+Codex / Claude Code / Gemini CLI ───────── local stdio ───┤
+                                                         ▼
          DAPA MCP Tool Registry
            ├── LawProvider ── 국가법령정보 Open API
            ├── DapaCatalogProvider ── DAPA 공식 목록 스냅샷
@@ -103,12 +103,15 @@ LAW_API_OC=dusgh4847 npm run backtest:law-api
 | 이름 | 필수 | 기본값 | 설명 |
 |---|---:|---:|---|
 | `LAW_API_OC` | 아니오 | `dusgh4847` | 국가법령정보 공동활용 공개 기본 인증값; 별도 값으로 재정의 가능 |
-| `LAW_API_TIMEOUT_MS` | 아니오 | `10000` | 요청 timeout |
+| `LAW_API_TIMEOUT_MS` | 아니오 | `55000` | 요청 timeout; 60초 Vercel 함수 한도 내 느린 지식베이스 API 대응 |
 | `LAW_API_RETRY_LIMIT` | 아니오 | `2` | 429/5xx 재시도 상한 |
 | `LAW_API_CACHE_TTL_MS` | 아니오 | `300000` | API 검색 캐시 TTL(밀리초), `0`이면 캐시 비활성화 |
 | `LAW_API_MAX_TEXT_RESPONSE_BYTES` | 아니오 | `8388608` | JSON/HTML API 응답 최대 바이트 |
 | `LAW_API_MAX_RESOURCE_RESPONSE_BYTES` | 아니오 | `26214400` | 별표·서식 파일 최대 바이트 |
 | `LAW_API_MAX_TOOL_RESPONSE_CHARS` | 아니오 | `250000` | 법령 API MCP 도구의 JSON 출력 최대 문자 수 |
+| `LAW_API_REFERER` | 아니오 | `https://www.law.go.kr/` | 클라우드에서 공식 API에 전달할 Referer |
+| `LAW_API_USER_AGENT` | 아니오 | `dapa-mcp/0.1 (...)` | 공식 API에 전달할 서버 식별자 |
+| `MCP_MAX_REQUEST_BYTES` | 아니오 | `1048576` | HTTP MCP 요청 본문 최대 바이트(1 MiB) |
 | `DAPA_INFO_PATH` | 아니오 | `./DAPA_info` | 공개지식 루트 |
 
 기본 인증값 `dusgh4847`은 누구나 바로 사용할 수 있도록 코드와 문서에 공개한다. 별도
@@ -253,11 +256,14 @@ v0.1.0은 `.mcpb` 패키지를 제공하지 않으므로 개발 중에는 Claude
 
 ### ChatGPT와 OpenAI API
 
-ChatGPT custom connector와 OpenAI Responses API의 MCP 도구는 원격 MCP `server_url`을
-사용한다. v0.1.0은 로컬 stdio 전용이므로 직접 연결을 지원한다고 표시하지 않는다.
-Streamable HTTP와 인증이 추가되는 Phase 2 이후
-[OpenAI 공식 Remote MCP 문서](https://platform.openai.com/docs/guides/tools-remote-mcp)를
-기준으로 연결한다.
+Vercel 배포 후 ChatGPT 개발자 모드의 앱 생성 화면에
+`https://<Vercel 도메인>/law`를 입력하고 인증 방식은 **No authentication**으로 선택한다.
+서버는 공개 HTTPS Streamable HTTP를 제공하므로 Secure MCP Tunnel은 필요하지 않다.
+Vercel의 Deployment Protection이 이 경로를 로그인 화면으로 막으면 도구 스캔이 실패하므로
+Production 배포는 공개 접근 가능해야 한다.
+
+Vercel 배포 체크리스트와 ChatGPT, Claude, Gemini, Codex의 등록 절차는
+[클라이언트 연결 가이드](./docs/REMOTE_MCP.md)를 따른다.
 
 ## DAPA_info 추가 방법
 
@@ -294,11 +300,13 @@ npm run build
 ```
 
 테스트는 정규화, 로컬 지식 검색, 공식 API wire fake, 429/5xx/손상 응답,
-인용 검증, 실제 stdio MCP 목록·호출을 포함한다.
+인용 검증, 실제 stdio 및 Streamable HTTP MCP 초기화·목록·호출을 포함한다.
 
 ## 보안과 법률상 주의
 
 - 공개 가능한 정보만 저장한다. 개인정보, 비공개 사업정보, 군사기밀, 내부망 주소를 금지한다.
+- 공개 HTTP 서버는 애플리케이션 인증을 요구하지 않으므로 Vercel Firewall에서 `/law`와
+  `/api/mcp`에 IP별 rate limit을 적용하고 사용량·오류율을 모니터링한다.
 - MCP 결과는 법률의견이나 정책결정을 대신하지 않는다.
 - `verified: true`는 공식 Source에서 해당 데이터를 조회했다는 뜻이지 법적 판단의 보증이 아니다.
 - 뉴스는 향후 추가되어도 법적 근거로 사용하지 않는다.

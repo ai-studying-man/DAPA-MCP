@@ -27,9 +27,17 @@
 - 국가법령정보 API 기준 카탈로그 커버리지 감사 및 미매칭 JSON 리포트
 - 국가법령정보 API 본문 Provider와 DAPA 카탈로그 Provider 분리
 
-## Phase 2B Public Knowledge (진행 예정)
+## Client Integration (구현 완료, Vercel 실배포 검증 대기)
 
-- Streamable HTTP(127.0.0.1 기본, 인증·Origin·rate limit 포함)
+- 직원 PC별 무인증 로컬 stdio 설치 절차
+- Codex·Claude Code·Gemini CLI의 로컬 stdio 등록 절차
+- Vercel Web Standard Streamable HTTP 엔드포인트(`/law`, `/mcp`, `/api/mcp`)
+- ChatGPT 개발자 모드의 공개 HTTPS URL 등록 절차
+- 요청 크기 제한, CORS, no-store, 함수 취소·60초 제한, Vercel Firewall 운영 절차
+- 남은 작업: Vercel Production URL에서 도구 스캔과 실제 OC 호출 검증
+
+## Phase 2B Public Knowledge (진행 중)
+
 - 방위사업청 공개데이터 및 국방표준
 - 공식 보도자료, KIPRISPlus, KCI/ScienceON Provider
 - Source별 TTL과 요청 예산 고도화

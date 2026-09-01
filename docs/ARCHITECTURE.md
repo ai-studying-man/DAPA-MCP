@@ -8,7 +8,8 @@ Open API와 로컬 공개지식 `DAPA_info`를 독립 Provider로 두며, 외부
 
 ```text
 MCP Client
-    │ stdio
+    ├── public HTTPS Streamable HTTP (`/law` → `/api/mcp`)
+    └── local stdio
     ▼
 Tool Registry (Zod boundary)
     ├── Generic LawProvider ── HTTPS ── 국가법령정보 공동활용 API
@@ -35,7 +36,14 @@ Tool Registry (Zod boundary)
   국가법령정보 공동활용 API가 기준이다.
 - `get_dapa_legal_content`는 카탈로그 제목·발령번호·발령일자로 국가법령정보 문서를
   식별한 뒤 동일한 `LawProvider` 상세 경로를 사용한다.
-- Streamable HTTP는 인증·Origin 검증·rate limit 설계와 함께 Phase 2에서 추가한다.
+- 웹 클라이언트는 Vercel의 공개 HTTPS Streamable HTTP 엔드포인트를 사용하고,
+  CLI 클라이언트는 기존 로컬 stdio를 계속 사용할 수 있다.
+- HTTP 전송은 요청마다 새 MCP 서버·transport를 만드는 stateless 구조다. 파싱된 DAPA Provider와
+  법령 Provider는 Vercel warm instance 안에서 재사용해 파일 I/O와 캐시를 반복 생성하지 않는다.
+- HTTP 요청은 1 MiB로 제한하고 응답에는 CORS와 `Cache-Control: no-store`를 적용한다.
+  전역 rate limit은 분산 함수 메모리가 아니라 Vercel Firewall에서 `/law`와 `/api/mcp`에 적용한다.
+- 국가법령정보 API 요청에는 설정 가능한 Referer와 User-Agent를 보내되, OC가 포함된 전체 URL은
+  로그나 도구 응답에 노출하지 않는다.
 
 ## 벤치마크 기록
 
