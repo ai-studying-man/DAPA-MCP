@@ -1,0 +1,28 @@
+{
+  "name": "dapa-mcp",
+  "version": "0.1.0",
+  "description": "공식 출처 기반 대한민국 방위사업 법령정보 조회 플러그인",
+  "author": {
+    "name": "DAPA MCP contributors",
+    "url": "https://github.com/ai-studying-man"
+  },
+  "homepage": "https://github.com/ai-studying-man/DAPA-MCP",
+  "repository": "https://github.com/ai-studying-man/DAPA-MCP",
+  "license": "MIT",
+  "keywords": ["dapa", "korean-law", "defense-acquisition", "mcp"],
+  "apps": "./.app.json",
+  "interface": {
+    "displayName": "DAPA MCP",
+    "shortDescription": "방위사업 관련 법령정보 조회",
+    "longDescription": "국가법령정보센터 Open API를 기준으로 방위사업 관련 법령, 행정규칙, 판례, 결정례와 법률정보를 조회합니다.",
+    "developerName": "DAPA MCP contributors",
+    "category": "Productivity",
+    "capabilities": ["Read"],
+    "websiteURL": "https://github.com/ai-studying-man/DAPA-MCP",
+    "defaultPrompt": [
+      "방위사업 관련 최신 법령 근거를 찾아줘.",
+      "질문과 관련된 법령과 행정규칙의 조문을 모두 확인해줘.",
+      "관련 판례와 결정례가 있는지 함께 조회해줘."
+    ]
+  }
+}

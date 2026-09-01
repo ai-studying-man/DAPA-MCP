@@ -265,6 +265,24 @@ Production 배포는 공개 접근 가능해야 한다.
 Vercel 배포 체크리스트와 ChatGPT, Claude, Gemini, Codex의 등록 절차는
 [클라이언트 연결 가이드](./docs/REMOTE_MCP.md)를 따른다.
 
+### ChatGPT·Codex 플러그인 마켓플레이스
+
+저장소에는 원격 DAPA MCP 앱을 참조하는 플러그인 패키지와 GitHub 마켓플레이스
+카탈로그가 포함되어 있다. 플러그인은 `.app.json`으로 ChatGPT에 등록된 앱을 참조하므로
+GPT 웹과 Codex의 지원 화면에서 함께 사용할 수 있다.
+
+플러그인 페이지에서 마켓플레이스를 추가할 때 다음 값을 사용한다.
+
+| 항목 | 값 |
+|---|---|
+| 출처 | `https://github.com/ai-studying-man/DAPA-MCP` |
+| Git ref | `main` |
+| Sparse 경로 | 비워 둠 |
+
+마켓플레이스를 추가한 뒤 `DAPA MCP` 플러그인을 설치하고 새 대화를 시작한다. 저장소의
+`.app.json`은 기존 원격 앱 연결을 참조할 뿐 새 앱을 생성하거나 접근 권한을 부여하지
+않으므로, 조직 배포 시 관리자는 해당 앱과 플러그인을 대상 역할에 허용해야 한다.
+
 ## DAPA_info 추가 방법
 
 구조화 항목은 `items` 배열을 가진 JSON으로 작성한다. 필수 필드는 `id`, `name`,

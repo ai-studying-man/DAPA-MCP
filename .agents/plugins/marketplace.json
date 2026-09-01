@@ -1,0 +1,20 @@
+{
+  "name": "personal",
+  "interface": {
+    "displayName": "DAPA MCP"
+  },
+  "plugins": [
+    {
+      "name": "dapa-mcp",
+      "source": {
+        "source": "local",
+        "path": "./plugins/dapa-mcp"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
