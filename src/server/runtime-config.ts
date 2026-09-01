@@ -54,7 +54,14 @@ export function loadRuntimeConfig(
   environment: Readonly<Record<string, string | undefined>>,
   paths: RuntimePaths,
 ): RuntimeConfig {
-  const parsed = EnvironmentSchema.parse(environment)
+  const parsed = EnvironmentSchema.parse(
+    Object.fromEntries(
+      Object.entries(environment).map(([key, value]) => [
+        key,
+        value?.trim() === "" ? undefined : value,
+      ]),
+    ),
+  )
   const dapaInfoPath = resolveDapaInfoPath(parsed.DAPA_INFO_PATH, paths)
   return {
     server: {

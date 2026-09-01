@@ -28,6 +28,36 @@ describe("DAPA MCP runtime configuration", () => {
     expect(config.server.law.apiKey).toBe("dusgh4847")
   })
 
+  it("uses defaults when Vercel provides blank detected environment values", () => {
+    const config = loadRuntimeConfig(
+      {
+        LAW_API_OC: "",
+        LAW_API_TIMEOUT_MS: "",
+        LAW_API_RETRY_LIMIT: "",
+        LAW_API_CACHE_TTL_MS: "",
+        LAW_API_MAX_TEXT_RESPONSE_BYTES: "",
+        LAW_API_MAX_RESOURCE_RESPONSE_BYTES: "",
+        LAW_API_MAX_TOOL_RESPONSE_CHARS: "",
+        LAW_API_REFERER: "",
+        LAW_API_USER_AGENT: "",
+        MCP_MAX_REQUEST_BYTES: "",
+        DAPA_INFO_PATH: "",
+      },
+      { workingDirectory: process.cwd(), packageRoot: process.cwd() },
+    )
+
+    expect(config.server.dapaInfoPath).toBe(resolve(process.cwd(), "DAPA_info"))
+    expect(config.server.law.apiKey).toBe("dusgh4847")
+    expect(config.server.law.timeoutMs).toBe(55_000)
+    expect(config.server.law.retryLimit).toBe(2)
+    expect(config.server.law.cacheTtlMs).toBe(300_000)
+    expect(config.server.law.maxTextResponseBytes).toBe(8 * 1024 * 1024)
+    expect(config.server.law.maxResourceResponseBytes).toBe(25 * 1024 * 1024)
+    expect(config.server.maxLawApiToolResponseChars).toBe(250_000)
+    expect(config.server.law.referer).toBe("https://www.law.go.kr/")
+    expect(config.maxMcpRequestBytes).toBe(1024 * 1024)
+  })
+
   it("rejects an unsafe MCP request-size configuration", () => {
     const environment = { MCP_MAX_REQUEST_BYTES: "100" }
 
