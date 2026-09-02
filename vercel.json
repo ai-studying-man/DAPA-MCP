@@ -10,6 +10,7 @@
     }
   },
   "rewrites": [
+    { "source": "/.well-known/openai-apps-challenge", "destination": "/api/openai-apps-challenge" },
     { "source": "/law", "destination": "/api/mcp" },
     { "source": "/mcp", "destination": "/api/mcp" },
     { "source": "/health", "destination": "/api/health" }

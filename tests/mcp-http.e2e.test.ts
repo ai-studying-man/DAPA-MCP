@@ -11,6 +11,7 @@ import { CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js"
 import { afterEach, describe, expect, it } from "vitest"
 import { GET as getHealth } from "../api/health.js"
 import { createMcpHttpHandler } from "../api/mcp.js"
+import { GET as getOpenAiAppsChallenge } from "../api/openai-apps-challenge.js"
 
 const clients: Client[] = []
 
@@ -46,6 +47,19 @@ afterEach(async () => {
 })
 
 describe("DAPA MCP Streamable HTTP", () => {
+  it("serves the OpenAI domain verification token as plain text", async () => {
+    // Given
+    const expectedToken = "wEHzKs_VE1FG8r_FIkpXIJr3B_Ui_9gH6DYN68HVEWY"
+
+    // When
+    const response = getOpenAiAppsChallenge()
+
+    // Then
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("text/plain")
+    await expect(response.text()).resolves.toBe(expectedToken)
+  })
+
   it("exposes a no-store health response for deployment checks", async () => {
     const response = getHealth()
 
