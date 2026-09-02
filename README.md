@@ -274,6 +274,19 @@ Production 배포는 공개 접근 가능해야 한다.
 Vercel 배포 체크리스트와 ChatGPT, Claude, Gemini, Codex의 등록 절차는
 [클라이언트 연결 가이드](./docs/REMOTE_MCP.md)를 따른다.
 
+### GitHub Pages 정책 페이지
+
+Plugin 공개 심사에 사용할 개인정보처리방침과 이용약관은 `docs/`에 정적 페이지로 제공한다.
+저장소 Settings → Pages에서 Source를 **GitHub Actions**로 한 번 선택하면 `main`의 변경 때마다
+자동 배포된다. 배포 후 주소는 다음과 같다.
+
+- 개인정보처리방침: `https://ai-studying-man.github.io/DAPA-MCP/privacy/`
+- 이용약관: `https://ai-studying-man.github.io/DAPA-MCP/terms/`
+- 서비스 안내: `https://ai-studying-man.github.io/DAPA-MCP/`
+
+이 주소들은 Plugin 메타데이터의 Website, Privacy policy URL, Terms of Service URL에 사용한다.
+MCP 서버 연결 주소인 `https://dapa-law-mcp.vercel.app/law`와는 구분한다.
+
 ### ChatGPT·Codex 플러그인 마켓플레이스
 
 저장소에는 원격 DAPA MCP 앱을 참조하는 플러그인 패키지와 GitHub 마켓플레이스

@@ -1,0 +1,7 @@
+title: DAPA LAW MCP
+description: 방위사업 업무를 위한 공식 법령정보 MCP
+lang: ko-KR
+url: https://ai-studying-man.github.io
+baseurl: /DAPA-MCP
+theme: jekyll-theme-minimal
+markdown: kramdown
