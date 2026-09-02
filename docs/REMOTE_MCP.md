@@ -6,7 +6,7 @@
 ChatGPT / 원격 MCP 클라이언트
     │ https://<도메인>/law
     ▼
-Vercel Streamable HTTP DAPA MCP ── 국가법령정보 API (`OC=dusgh4847`)
+Vercel Streamable HTTP DAPA MCP ── 국가법령정보 API (`OC=서버 내부 설정값`)
 
 Codex / Claude Code / Gemini CLI
     │ local stdio
@@ -14,8 +14,9 @@ Codex / Claude Code / Gemini CLI
 ```
 
 공개 HTTPS 방식은 직원 PC에 Git, Node.js 또는 터널을 설치하지 않아도 된다. 서버 인증 방식은
-`No authentication`이며, 국가법령정보 API의 공개 기본 OC `dusgh4847`은 서버 내부 요청에만
-사용한다. GitHub URL 자체는 MCP 주소가 아니고, Vercel이 배포한 HTTPS URL이 MCP 주소다.
+`No authentication`이며, 국가법령정보 API 인증값은 서버 내부 설정으로만 사용한다. GitHub URL
+자체는 MCP 주소가 아니고, Vercel이 배포한 HTTPS URL이 MCP 주소다. 인증값은 저장소, URL,
+로그와 클라이언트 설정에 기록하지 않는다.
 
 ## 1. Vercel Production 배포
 
@@ -38,8 +39,9 @@ Vercel의 New Project에서 GitHub `ai-studying-man/DAPA-MCP`의 `main`을 선�
 - 원본 함수: `https://<project>.vercel.app/api/mcp`
 - 상태 확인: `https://<project>.vercel.app/health`
 
-환경변수는 없어도 공개 기본 OC로 동작한다. 별도 OC를 쓸 때만 Vercel Project Settings의
-Environment Variables에 `LAW_API_OC`를 추가한다. `.env` 파일은 배포하지 않는다.
+서버에 설정된 기본값으로도 동작할 수 있지만, 운영 배포에서는 Vercel Project Settings의
+Environment Variables에 `LAW_API_OC`를 저장하는 방식을 권장한다. `.env` 파일과 인증값은
+배포하지 않는다.
 
 배포 후 Vercel에서 다음을 확인한다.
 

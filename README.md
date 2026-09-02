@@ -54,16 +54,17 @@ npm run sync:dapa-catalog
 카탈로그의 각 항목을 국가법령정보 공동활용 Open API의 최신 목록과 대조해
 미매칭 목록을 만들려면 다음 명령을 실행한다. 행정규칙은 DAPA 기관 범위에서
 현행 목록과 연혁 목록을 함께 수집한 뒤 문서 ID·발령번호·발령일자·제목 순으로
-연결한다. 개발용 스크립트에는 공개 기본 인증값을 명시적으로 전달한다.
+연결한다. 개발용 스크립트에는 인증값을 환경변수로 전달하며 실제 값은 저장소와 셸 명령
+기록에 남기지 않는다.
 
 ```bash
-LAW_API_OC=dusgh4847 npm run audit:dapa-catalog
+LAW_API_OC="<your-oc>" npm run audit:dapa-catalog
 ```
 
 PowerShell에서는 다음처럼 실행한다.
 
 ```powershell
-$env:LAW_API_OC = "dusgh4847"
+$env:LAW_API_OC = "<your-oc>"
 npm run audit:dapa-catalog
 Remove-Item Env:LAW_API_OC
 ```
@@ -95,14 +96,14 @@ npm run sync:dapa-policy
 사용하며, 환경변수로 교체할 수 있다.
 
 ```bash
-LAW_API_OC=dusgh4847 npm run backtest:law-api
+LAW_API_OC="<your-oc>" npm run backtest:law-api
 ```
 
 ## 환경변수
 
 | 이름 | 필수 | 기본값 | 설명 |
 |---|---:|---:|---|
-| `LAW_API_OC` | 아니오 | `dusgh4847` | 국가법령정보 공동활용 공개 기본 인증값; 별도 값으로 재정의 가능 |
+| `LAW_API_OC` | 아니오 | 서버 기본값 사용 | 국가법령정보 공동활용 인증값; 운영 환경에서는 환경변수로 설정 |
 | `LAW_API_TIMEOUT_MS` | 아니오 | `55000` | 요청 timeout; 60초 Vercel 함수 한도 내 느린 지식베이스 API 대응 |
 | `LAW_API_RETRY_LIMIT` | 아니오 | `2` | 429/5xx 재시도 상한 |
 | `LAW_API_CACHE_TTL_MS` | 아니오 | `300000` | API 검색 캐시 TTL(밀리초), `0`이면 캐시 비활성화 |
@@ -114,14 +115,15 @@ LAW_API_OC=dusgh4847 npm run backtest:law-api
 | `MCP_MAX_REQUEST_BYTES` | 아니오 | `1048576` | HTTP MCP 요청 본문 최대 바이트(1 MiB) |
 | `DAPA_INFO_PATH` | 아니오 | `./DAPA_info` | 공개지식 루트 |
 
-기본 인증값 `dusgh4847`은 누구나 바로 사용할 수 있도록 코드와 문서에 공개한다. 별도
-인증값을 사용하려면 `LAW_API_OC`로 재정의한다. `.env`는 Git에서 제외된다.
+서버는 설정된 기본 인증값 또는 `LAW_API_OC` 환경변수의 값을 사용한다. 인증값 자체는
+저장소, 문서, URL, 로그에 기록하지 않는다. `.env`는 Git에서 제외된다.
 
 ### 국가법령정보 API 설정
 
-별도 인증 절차 없이 기본 인증값으로 법령 API를 사용할 수 있다. 자체 인증값이 있으면
+별도 인증 절차 없이 서버에 설정된 값으로 법령 API를 사용할 수 있다. 자체 인증값이 있으면
 MCP Client가 서버를 시작할 때 `LAW_API_OC` 환경변수로 전달하고, `source_health`에서
-`law: healthy`를 확인한다.
+`law: healthy`를 확인한다. 공개 Vercel 배포에서는 Project Settings의 환경변수에 저장하고
+문서나 클라이언트 설정에 값을 직접 넣지 않는다.
 
 ## MCP 도구
 
