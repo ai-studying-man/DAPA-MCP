@@ -30,31 +30,33 @@ afterEach(async () => {
 describe("DAPA MCP stdio", () => {
   it("advertises the legal and DAPA catalog tools", async () => {
     // Given
-    const expected = [
-      "get_dapa_organization",
-      "get_dapa_legal_catalog_item",
-      "get_dapa_legal_content",
-      "get_dapa_policy_page",
-      "get_legal_api_body",
-      "get_legal_detail",
-      "get_legal_history",
-      "list_legal_apis",
-      "query_legal_api",
-      "search_legal_content",
-      "dapa_catalog_status",
-      "search_dapa_info",
-      "search_dapa_legal_catalog",
-      "search_dapa_policy",
-      "search_legal",
-      "source_health",
-      "verify_citations",
-    ]
+    const expected = {
+      dapa_catalog_status: "방위사업청 법령 카탈로그 상태",
+      get_dapa_legal_catalog_item: "방위사업청 법령 카탈로그 조회",
+      get_dapa_legal_content: "방위사업청 법령 원문 조회",
+      get_dapa_organization: "방위사업청 조직정보 조회",
+      get_dapa_policy_page: "방위사업청 정책자료 원문 조회",
+      get_legal_api_body: "국가법령정보 본문·첨부 조회",
+      get_legal_detail: "공식 법령·판례 상세 조회",
+      get_legal_history: "법령 연혁 조회",
+      list_legal_apis: "국가법령정보 API 목록",
+      query_legal_api: "국가법령정보 API 조회",
+      search_dapa_info: "방위사업청 업무정보 검색",
+      search_dapa_legal_catalog: "방위사업청 법령·행정규칙 검색",
+      search_dapa_policy: "방위사업청 정책자료 검색",
+      search_legal: "공식 법령·판례 검색",
+      search_legal_content: "법령·행정규칙 본문 검색",
+      source_health: "공식 출처 연결 상태",
+      verify_citations: "법령 인용 검증",
+    } as const
 
     // When
     const response = await client.listTools()
 
     // Then
-    expect(response.tools.map((tool) => tool.name).sort()).toEqual(expected.sort())
+    expect(Object.fromEntries(response.tools.map((tool) => [tool.name, tool.title]))).toEqual(
+      expected,
+    )
   })
 
   it("publishes server instructions during initialization", () => {

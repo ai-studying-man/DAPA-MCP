@@ -51,6 +51,7 @@ export function registerLawApiTools(
   server.registerTool(
     "list_legal_apis",
     {
+      title: "국가법령정보 API 목록",
       description:
         "국가법령정보 공동활용의 DAPA 관련 14개 범주와 목록·본문 API target을 조회합니다.",
       inputSchema: { category: z.enum(LAW_API_CATEGORY_IDS).optional() },
@@ -87,6 +88,7 @@ export function registerLawApiTools(
   server.registerTool(
     "query_legal_api",
     {
+      title: "국가법령정보 API 조회",
       description:
         "list_legal_apis의 apiId로 공식 목록·본문을 온디맨드 조회합니다. 콘텐츠를 MCP에 사전 적재하지 않습니다.",
       inputSchema: QueryLegalApiSchema,
@@ -115,6 +117,7 @@ export function registerLawApiTools(
   server.registerTool(
     "get_legal_api_body",
     {
+      title: "국가법령정보 본문·첨부 조회",
       description:
         "목록 apiId와 결과 식별자로 대응 본문 API를 자동 호출합니다. 별표·서식은 목록의 공식 파일 링크를 내려받아 HWP/HWPX/PDF/XLSX/DOCX 본문을 텍스트로 추출합니다.",
       inputSchema: GetLegalApiBodySchema,

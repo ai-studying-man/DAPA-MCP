@@ -19,6 +19,7 @@ export function registerLegalContentTools(server: McpServer, law: LawProvider): 
   server.registerTool(
     "search_legal_content",
     {
+      title: "법령·행정규칙 본문 검색",
       description:
         "국가법령정보 API에서 후보 문서를 검색하고 각 문서의 최신 상세 본문과 조문을 함께 조회합니다.",
       inputSchema: SearchLegalContentSchema,

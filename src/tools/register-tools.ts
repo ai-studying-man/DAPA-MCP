@@ -77,6 +77,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
   server.registerTool(
     "search_legal",
     {
+      title: "공식 법령·판례 검색",
       description: "공식 국가법령정보 API에서 법령·행정규칙·판례·해석례를 검색합니다.",
       inputSchema: SearchLegalSchema,
       annotations: READ_ONLY_ANNOTATIONS,
@@ -98,6 +99,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
   server.registerTool(
     "get_legal_detail",
     {
+      title: "공식 법령·판례 상세 조회",
       description: "search_legal에서 받은 documentId로 공식 문서 상세를 조회합니다.",
       inputSchema: GetLegalDetailSchema,
       annotations: READ_ONLY_ANNOTATIONS,
@@ -111,6 +113,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
   server.registerTool(
     "get_legal_history",
     {
+      title: "법령 연혁 조회",
       description: "공식 국가법령정보에서 법령의 제정·개정·폐지 연혁을 조회합니다.",
       inputSchema: {
         lawName: z.string().min(1).describe("정확한 법령명"),
@@ -124,6 +127,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
   server.registerTool(
     "verify_citations",
     {
+      title: "법령 인용 검증",
       description: "법령 조문 또는 사건번호가 공식 출처에 실제 존재하는지 검증합니다.",
       inputSchema: VerifyCitationsSchema,
       annotations: READ_ONLY_ANNOTATIONS,
@@ -135,6 +139,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
   server.registerTool(
     "search_dapa_info",
     {
+      title: "방위사업청 업무정보 검색",
       description: "공개 출처 기반 DAPA_info에서 조직·용어·업무 지식을 검색합니다.",
       inputSchema: SearchDapaInfoSchema,
       annotations: READ_ONLY_ANNOTATIONS,
@@ -152,6 +157,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
   server.registerTool(
     "get_dapa_organization",
     {
+      title: "방위사업청 조직정보 조회",
       description: "방위사업청 조직명 또는 별칭으로 조직 상세를 조회합니다.",
       inputSchema: GetOrganizationSchema,
       annotations: READ_ONLY_ANNOTATIONS,
@@ -171,6 +177,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
   server.registerTool(
     "search_dapa_legal_catalog",
     {
+      title: "방위사업청 법령·행정규칙 검색",
       description: "방위사업청 공식 홈페이지의 법령·행정규칙 카탈로그를 검색합니다.",
       inputSchema: SearchDapaCatalogSchema,
       annotations: READ_ONLY_ANNOTATIONS,
@@ -189,6 +196,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
   server.registerTool(
     "get_dapa_legal_catalog_item",
     {
+      title: "방위사업청 법령 카탈로그 조회",
       description: "DAPA 공식 법령·행정규칙 카탈로그 항목을 ID로 조회합니다.",
       inputSchema: { id: z.string().min(1) },
       annotations: READ_ONLY_ANNOTATIONS,
@@ -206,6 +214,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
   server.registerTool(
     "get_dapa_legal_content",
     {
+      title: "방위사업청 법령 원문 조회",
       description: "DAPA 카탈로그 ID를 국가법령정보 문서와 연결해 실제 본문을 조회합니다.",
       inputSchema: { id: z.string().min(1) },
       annotations: READ_ONLY_ANNOTATIONS,
@@ -219,6 +228,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
   server.registerTool(
     "dapa_catalog_status",
     {
+      title: "방위사업청 법령 카탈로그 상태",
       description: "DAPA 공식 법령·행정규칙 카탈로그의 동기화 상태를 반환합니다.",
       inputSchema: {},
       annotations: READ_ONLY_ANNOTATIONS,
@@ -229,6 +239,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
   server.registerTool(
     "source_health",
     {
+      title: "공식 출처 연결 상태",
       description: "각 데이터 Provider의 설정 및 가용 상태를 반환합니다.",
       inputSchema: {},
       annotations: READ_ONLY_ANNOTATIONS,
