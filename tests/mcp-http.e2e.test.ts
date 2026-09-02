@@ -49,7 +49,7 @@ afterEach(async () => {
 describe("DAPA MCP Streamable HTTP", () => {
   it("serves the OpenAI domain verification token as plain text", async () => {
     // Given
-    const expectedToken = "wEHzKs_VE1FG8r_FIkpXIJr3B_Ui_9gH6DYN68HVEWY"
+    const expectedToken = "wEHzKs_VE1FG8r_FIkpXlJr3B_Ui_9gH6DYN68HVEWY"
 
     // When
     const response = getOpenAiAppsChallenge()
