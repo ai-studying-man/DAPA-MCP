@@ -373,6 +373,25 @@ describe("LawApiProvider", () => {
     expect(result.errors[0]?.message).toContain("본문")
   })
 
+  it("maps an official no-result message to NOT_FOUND", async () => {
+    // Given
+    const api = await startFakeLawApi((_request, response) => {
+      response.setHeader("content-type", "application/json")
+      response.end(
+        JSON.stringify({ Law: "일치하는 법령용어가 없습니다. 검색조건을 확인하여 주십시오." }),
+      )
+    })
+    openApis.push(api)
+    const provider = new LawApiProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+    // When
+    const result = await provider.query({ apiId: "legal_term.detail", query: "없는 용어" })
+
+    // Then
+    expect(result.status).toBe("NOT_FOUND")
+    expect(result.errors).toEqual([])
+  })
+
   it("does not treat a metadata-only success list envelope as NOT_FOUND", async () => {
     // Given
     const api = await startFakeLawApi((_request, response) => {

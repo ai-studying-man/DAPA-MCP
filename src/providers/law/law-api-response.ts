@@ -12,6 +12,8 @@ const AuthenticationFailureSchema = z.object({
 const SUCCESS_RESULT_CODES = new Set(["0", "00", "200", "success"])
 const AUTHENTICATION_ERROR = /사용자(?: 정보)? 검증|인증|unauthori[sz]ed/i
 const FAILURE_RESULT = /실패|오류|error|invalid/i
+const NO_RESULT_MESSAGE =
+  /^(?:일치하는 .*없습니다|검색결과가? 없습니다|검색조건을 확인하여 주십시오)/u
 const DETAIL_METADATA_FIELDS = new Set([
   "resultCode",
   "resultMsg",
@@ -78,6 +80,7 @@ function isEmptyApiResponse(api: LawApiConfig, data: Readonly<Record<string, unk
   if (Object.keys(data).length === 0) {
     throw new DapaError("SOURCE_UNAVAILABLE", "법제처 API 응답에 결과가 없습니다")
   }
+  if (hasNoResultMessage(data)) return true
   if (api.operation === "list") {
     if (findTotalCount(data) === 0) return true
     if (!hasDetailContent(data)) {
@@ -89,6 +92,13 @@ function isEmptyApiResponse(api: LawApiConfig, data: Readonly<Record<string, unk
     throw new DapaError("SOURCE_UNAVAILABLE", "법제처 API 상세 응답에 본문이 없습니다")
   }
   return false
+}
+
+function hasNoResultMessage(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(hasNoResultMessage)
+  const record = ApiResponseSchema.safeParse(value)
+  if (record.success) return Object.values(record.data).some(hasNoResultMessage)
+  return typeof value === "string" && NO_RESULT_MESSAGE.test(value.trim())
 }
 
 function findTotalCount(value: unknown): number | undefined {

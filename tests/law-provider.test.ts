@@ -9,6 +9,60 @@ afterEach(async () => {
 })
 
 describe("LawProvider", () => {
+  it.each([
+    [
+      "interpretation",
+      {
+        Expc: {
+          totalCnt: "1",
+          expc: [
+            {
+              법령해석례일련번호: "313001",
+              안건명: "방위사업 해석",
+              해석기관명: "법제처",
+              회신일자: "20260102",
+            },
+          ],
+        },
+      },
+    ],
+    [
+      "administrative_appeal",
+      {
+        Decc: {
+          totalCnt: "1",
+          decc: [
+            {
+              행정심판재결례일련번호: "412001",
+              사건명: "방위사업 재결",
+              재결청: "중앙행정심판위원회",
+              의결일자: "20260103",
+            },
+          ],
+        },
+      },
+    ],
+  ] as const)(
+    "maps the %s search envelope returned by the official API",
+    async (sourceType, body) => {
+      // Given
+      const api = await startFakeLawApi((_request, response) => {
+        response.setHeader("content-type", "application/json")
+        response.end(JSON.stringify(body))
+      })
+      openApis.push(api)
+      const provider = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+      // When
+      const result = await provider.search({ query: "방위사업", types: [sourceType], limit: 5 })
+
+      // Then
+      expect(result.status).toBe("OK")
+      expect(result.results[0]?.sourceType).toBe(sourceType)
+      expect(result.results[0]?.documentId).toMatch(/^(313001|412001)$/u)
+    },
+  )
+
   it("maps an official law search response to the unified schema", async () => {
     // Given
     const api = await startFakeLawApi((_request, response) => {

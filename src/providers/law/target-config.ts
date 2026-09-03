@@ -70,7 +70,7 @@ const configs = [
   [
     "interpretation",
     "expc",
-    "ExpcSearch",
+    "Expc",
     "expc",
     ["법령해석례일련번호"],
     ["안건명"],
@@ -83,7 +83,7 @@ const configs = [
   [
     "administrative_appeal",
     "decc",
-    "DeccSearch",
+    "Decc",
     "decc",
     ["행정심판재결례일련번호"],
     ["사건명"],
