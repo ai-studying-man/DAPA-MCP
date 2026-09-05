@@ -45,7 +45,7 @@ describe("DAPA MCP stdio", () => {
       search_dapa_legal_catalog: "방위사업청 법령·행정규칙 검색",
       search_dapa_policy: "방위사업청 정책자료 검색",
       search_legal: "공식 법령·판례 검색",
-      search_legal_content: "법령·행정규칙 본문 검색",
+      search_legal_content: "법령·판례 통합 본문 검색",
       source_health: "공식 출처 연결 상태",
       verify_citations: "법령 인용 검증",
     } as const
@@ -71,7 +71,7 @@ describe("DAPA MCP stdio", () => {
     expect(instructions?.length).toBeGreaterThan(0)
   })
 
-  it("reports the law provider as healthy when LAW_API_OC is omitted", async () => {
+  it("reports the law provider as unconfigured when LAW_API_OC is omitted", async () => {
     // Given
     const request = { name: "source_health", arguments: {} }
 
@@ -79,11 +79,22 @@ describe("DAPA MCP stdio", () => {
     const response = CallToolResultSchema.parse(await client.callTool(request))
     const text = response.content.find((item) => item.type === "text")
     const parsed = z
-      .object({ law: z.literal("healthy") })
+      .object({ law: z.literal("not_configured") })
       .parse(JSON.parse(text?.type === "text" ? text.text : "{}"))
 
     // Then
-    expect(parsed.law).toBe("healthy")
+    expect(parsed.law).toBe("not_configured")
+  })
+
+  it("rejects an excessively long legal-content query before calling the provider", async () => {
+    // Given
+    const request = { name: "search_legal_content", arguments: { query: "가".repeat(501) } }
+
+    // When
+    const response = CallToolResultSchema.parse(await client.callTool(request))
+
+    // Then
+    expect(response.isError).toBe(true)
   })
 
   it("retrieves synchronized work-policy content through stdio", async () => {

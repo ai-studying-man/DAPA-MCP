@@ -163,4 +163,60 @@ describe("LawProvider.getDetail", () => {
       text: "제1조(목적) 이 지침은 업무 절차를 정함을 목적으로 한다.",
     })
   })
+
+  it("reuses a successful detail response from the TTL cache", async () => {
+    // Given
+    let requestCount = 0
+    const api = await startFakeLawApi((_request, response) => {
+      requestCount += 1
+      response.setHeader("content-type", "application/json")
+      response.end(
+        JSON.stringify({
+          법령: {
+            기본정보: { 법령명_한글: "방위사업법" },
+            조문: { 조문단위: [{ 조문번호: "1", 조문내용: "목적" }] },
+          },
+        }),
+      )
+    })
+    openApis.push(api)
+    const provider = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+    // When
+    await provider.getDetail({ documentId: "276787", sourceType: "law" })
+    const result = await provider.getDetail({ documentId: "276787", sourceType: "law" })
+
+    // Then
+    expect(result.status).toBe("OK")
+    expect(requestCount).toBe(1)
+  })
+
+  it("coalesces concurrent requests for the same detail document", async () => {
+    // Given
+    let requestCount = 0
+    const api = await startFakeLawApi((_request, response) => {
+      requestCount += 1
+      response.setHeader("content-type", "application/json")
+      response.end(
+        JSON.stringify({
+          법령: {
+            기본정보: { 법령명_한글: "방위사업법" },
+            조문: { 조문단위: [{ 조문번호: "1", 조문내용: "목적" }] },
+          },
+        }),
+      )
+    })
+    openApis.push(api)
+    const provider = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+    // When
+    const results = await Promise.all([
+      provider.getDetail({ documentId: "276787", sourceType: "law" }),
+      provider.getDetail({ documentId: "276787", sourceType: "law" }),
+    ])
+
+    // Then
+    expect(results.map((result) => result.status)).toEqual(["OK", "OK"])
+    expect(requestCount).toBe(1)
+  })
 })

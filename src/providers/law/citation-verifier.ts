@@ -1,7 +1,7 @@
 import { type ParsedCitation, parseCitation } from "../../lib/citation/parser.js"
 import { DapaError } from "../../lib/errors/dapa-error.js"
 import { normalizeSearchText } from "../../lib/normalization/text.js"
-import type { DapaSearchResult, SearchResponse } from "../../types/results.js"
+import type { DapaSearchResult, SearchResponse, SourceType } from "../../types/results.js"
 import type { LawProvider } from "./law-provider.js"
 
 export const VERIFICATION_STATUSES = [
@@ -10,6 +10,7 @@ export const VERIFICATION_STATUSES = [
   "UNVERIFIED",
   "SOURCE_UNAVAILABLE",
   "AMBIGUOUS",
+  "CONTENT_MISMATCH",
 ] as const
 
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number]
@@ -45,7 +46,7 @@ export class CitationVerifier {
   private async verifyLaw(citation: ParsedCitation): Promise<CitationVerification> {
     const search = await this.lawProvider.search({
       query: citation.documentName ?? citation.raw,
-      types: ["law"],
+      types: legalDocumentSourceTypes(citation.documentName ?? ""),
       currentOnly: true,
       limit: 20,
     })
@@ -54,14 +55,14 @@ export class CitationVerifier {
     const expectedName = normalizeSearchText(citation.documentName ?? "")
     const exact = search.results.filter((item) => normalizeSearchText(item.title) === expectedName)
     if (exact.length === 0)
-      return result(citation.raw, "NOT_FOUND", "현행 법령명을 확인할 수 없습니다")
+      return result(citation.raw, "NOT_FOUND", "현행 법령·행정규칙·자치법규명을 확인할 수 없습니다")
     if (exact.length > 1)
       return result(citation.raw, "AMBIGUOUS", "동일한 법령명 후보가 여러 건입니다")
     const document = exact[0]
     if (document === undefined) return result(citation.raw, "NOT_FOUND", "법령 후보가 없습니다")
     const detail = await this.lawProvider.getDetail({
       documentId: document.documentId,
-      sourceType: "law",
+      sourceType: document.sourceType,
     })
     if (detail.status !== "OK") {
       return result(
@@ -70,19 +71,28 @@ export class CitationVerifier {
         detail.errors[0]?.message ?? "상세 조회 실패",
       )
     }
-    const content = detail.results[0]?.content ?? ""
-    const articleNumber = citation.article?.match(/제(\d+)조/)?.[1]
-    const articleFound =
-      articleNumber !== undefined &&
-      (content.includes(`"조문번호":"${articleNumber}"`) ||
-        content.includes(`"조문번호":${articleNumber}`) ||
-        normalizeSearchText(content).includes(normalizeSearchText(`제${articleNumber}조`)))
-    if (!articleFound)
+    const articleNumber = citation.article?.match(/^제(\d+조(?:의\d+)?)/)?.[1]?.replace("조", "")
+    const article = detail.detail?.articles.find(
+      (item) =>
+        normalizeSearchText(item.articleNumber) === normalizeSearchText(articleNumber ?? ""),
+    )
+    if (article === undefined)
       return withDocument(citation.raw, "NOT_FOUND", "해당 조문을 확인할 수 없습니다", document)
+    if (
+      citation.claimedArticleTitle !== undefined &&
+      normalizeSearchText(article.title ?? "") !== normalizeSearchText(citation.claimedArticleTitle)
+    ) {
+      return withDocument(
+        citation.raw,
+        "CONTENT_MISMATCH",
+        `인용한 조문 제목과 공식 조문 제목이 다릅니다: ${article.title ?? "제목 없음"}`,
+        document,
+      )
+    }
     return withDocument(
       citation.raw,
       "VERIFIED",
-      "법령명과 조문이 공식 본문에서 확인되었습니다",
+      "문서명과 조문이 공식 본문에서 확인되었습니다",
       document,
     )
   }
@@ -90,7 +100,7 @@ export class CitationVerifier {
   private async verifyCase(citation: ParsedCitation): Promise<CitationVerification> {
     const search = await this.lawProvider.search({
       query: citation.caseNumber ?? citation.raw,
-      types: ["precedent"],
+      types: [citation.documentName === "헌법재판소" ? "constitutional_case" : "precedent"],
       limit: 20,
     })
     const unavailableResult = fromUnavailableSearch(citation.raw, search)
@@ -106,10 +116,18 @@ export class CitationVerifier {
       : withDocument(
           citation.raw,
           "VERIFIED",
-          "사건번호가 공식 판례 검색에서 확인되었습니다",
+          "사건번호가 공식 판례·결정례 검색에서 확인되었습니다",
           document,
         )
   }
+}
+
+function legalDocumentSourceTypes(documentName: string): readonly SourceType[] {
+  if (/(?:규정|훈령|예규|고시)$/u.test(documentName)) return ["administrative_rule"]
+  if (/조례$/u.test(documentName)) return ["local_ordinance"]
+  if (/시행규칙$/u.test(documentName)) return ["law"]
+  if (/규칙$/u.test(documentName)) return ["law", "administrative_rule", "local_ordinance"]
+  return ["law"]
 }
 
 function fromUnavailableSearch(

@@ -15,17 +15,22 @@ describe("DAPA MCP runtime configuration", () => {
     expect(config.server.law.apiKey).toBe("test-oc")
     expect(config.server.law.referer).toBe("https://www.law.go.kr/")
     expect(config.server.law.userAgent).toContain("dapa-mcp")
-    expect(config.server.law.timeoutMs).toBe(55_000)
+    expect(config.server.law.timeoutMs).toBe(15_000)
+    expect(config.server.law.retryLimit).toBe(1)
+    expect(config.server.law.detailCacheTtlMs).toBe(21_600_000)
+    expect(config.server.law.maxConcurrency).toBe(8)
+    expect(config.server.law.maxQueue).toBe(128)
+    expect(config.server.legalContentSearchBudgetMs).toBe(25_000)
     expect(config.maxMcpRequestBytes).toBe(1024 * 1024)
   })
 
-  it("keeps the shared OC default when the environment omits it", () => {
+  it("leaves the law provider unconfigured when the environment omits its OC", () => {
     const config = loadRuntimeConfig(
       { DAPA_INFO_PATH: "./DAPA_info" },
       { workingDirectory: process.cwd(), packageRoot: process.cwd() },
     )
 
-    expect(config.server.law.apiKey).toBe("dusgh4847")
+    expect(config.server.law.apiKey).toBeUndefined()
   })
 
   it("uses defaults when Vercel provides blank detected environment values", () => {
@@ -35,8 +40,12 @@ describe("DAPA MCP runtime configuration", () => {
         LAW_API_TIMEOUT_MS: "",
         LAW_API_RETRY_LIMIT: "",
         LAW_API_CACHE_TTL_MS: "",
+        LAW_API_DETAIL_CACHE_TTL_MS: "",
         LAW_API_MAX_TEXT_RESPONSE_BYTES: "",
         LAW_API_MAX_RESOURCE_RESPONSE_BYTES: "",
+        LAW_API_MAX_CONCURRENCY: "",
+        LAW_API_MAX_QUEUE: "",
+        LAW_API_CONTENT_SEARCH_BUDGET_MS: "",
         LAW_API_MAX_TOOL_RESPONSE_CHARS: "",
         LAW_API_REFERER: "",
         LAW_API_USER_AGENT: "",
@@ -47,12 +56,16 @@ describe("DAPA MCP runtime configuration", () => {
     )
 
     expect(config.server.dapaInfoPath).toBe(resolve(process.cwd(), "DAPA_info"))
-    expect(config.server.law.apiKey).toBe("dusgh4847")
-    expect(config.server.law.timeoutMs).toBe(55_000)
-    expect(config.server.law.retryLimit).toBe(2)
+    expect(config.server.law.apiKey).toBeUndefined()
+    expect(config.server.law.timeoutMs).toBe(15_000)
+    expect(config.server.law.retryLimit).toBe(1)
     expect(config.server.law.cacheTtlMs).toBe(300_000)
+    expect(config.server.law.detailCacheTtlMs).toBe(21_600_000)
     expect(config.server.law.maxTextResponseBytes).toBe(8 * 1024 * 1024)
     expect(config.server.law.maxResourceResponseBytes).toBe(25 * 1024 * 1024)
+    expect(config.server.law.maxConcurrency).toBe(8)
+    expect(config.server.law.maxQueue).toBe(128)
+    expect(config.server.legalContentSearchBudgetMs).toBe(25_000)
     expect(config.server.maxLawApiToolResponseChars).toBe(250_000)
     expect(config.server.law.referer).toBe("https://www.law.go.kr/")
     expect(config.maxMcpRequestBytes).toBe(1024 * 1024)

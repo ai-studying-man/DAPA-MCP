@@ -59,15 +59,19 @@ export function parseLawDetailDocument(
   const lawRoot = DetailSchema.safeParse(detail.data["법령"])
   const administrativeRuleRoot = DetailSchema.safeParse(detail.data["행정규칙"])
   const administrativeRuleService = DetailSchema.safeParse(detail.data["AdmRulService"])
+  const localOrdinanceService = DetailSchema.safeParse(detail.data["LawService"])
   const normalizedAdministrativeRule = administrativeRuleService.success
     ? normalizeAdministrativeRule(administrativeRuleService.data)
+    : undefined
+  const normalizedLocalOrdinance = localOrdinanceService.success
+    ? normalizeLocalOrdinance(localOrdinanceService.data)
     : undefined
   const normalized = parseLegalDocumentDetail(
     lawRoot.success
       ? lawRoot.data
       : administrativeRuleRoot.success
         ? administrativeRuleRoot.data
-        : (normalizedAdministrativeRule ?? detail.data),
+        : (normalizedAdministrativeRule ?? normalizedLocalOrdinance ?? detail.data),
   )
   if (!hasSubstantiveContent(normalized, detail.data)) {
     throw new DapaError("SOURCE_UNAVAILABLE", "법제처 상세 응답에 법령 본문이 없습니다")
@@ -88,6 +92,53 @@ export function parseLawDetailDocument(
     documentId,
   }
   return { result, detail: normalized }
+}
+
+function normalizeLocalOrdinance(root: Record<string, unknown>): Record<string, unknown> {
+  const basicInfo = DetailSchema.safeParse(root["자치법규기본정보"])
+  const info = basicInfo.success ? basicInfo.data : {}
+  const articlesRoot = DetailSchema.safeParse(root["조문"])
+  const articles = articlesRoot.success
+    ? normalizeLocalOrdinanceArticles(articlesRoot.data["조"])
+    : []
+  return {
+    ...root,
+    기본정보: {
+      법령명_한글: info["자치법규명"],
+      법령ID: info["자치법규ID"] ?? info["자치법규일련번호"],
+      공포일자: info["공포일자"],
+      시행일자: info["시행일자"],
+      소관부처: info["지자체기관명"],
+      법종구분: info["자치법규종류"],
+      제개정구분: info["제개정정보"],
+    },
+    조문: { 조문단위: articles },
+  }
+}
+
+function normalizeLocalOrdinanceArticles(value: unknown): readonly Record<string, unknown>[] {
+  const candidates = Array.isArray(value) ? value : value === undefined ? [] : [value]
+  return candidates.flatMap((candidate) => {
+    const article = DetailSchema.safeParse(candidate)
+    if (!article.success) return []
+    const text = article.data["조내용"]
+    const bodyNumber =
+      typeof text === "string" ? /^제(\d+(?:의\d+)?)조/u.exec(text)?.[1] : undefined
+    const rawNumber = article.data["조문번호"]
+    const articleNumber =
+      bodyNumber ??
+      (typeof rawNumber === "string" || typeof rawNumber === "number"
+        ? String(rawNumber)
+        : undefined)
+    if (articleNumber === undefined) return []
+    return [
+      {
+        조문번호: articleNumber,
+        조문제목: article.data["조제목"],
+        조문내용: article.data["조내용"],
+      },
+    ]
+  })
 }
 
 function hasSubstantiveContent(

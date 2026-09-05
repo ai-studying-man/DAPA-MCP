@@ -1,3 +1,7 @@
+import { stringifyBoundedToolResponse } from "./law-api-tool-response.js"
+
+const DEFAULT_MAX_TOOL_RESPONSE_CHARS = 250_000
+
 export function textResult(
   value: object,
   isError = false,
@@ -6,7 +10,12 @@ export function textResult(
   isError: boolean
 } {
   return {
-    content: [{ type: "text", text: JSON.stringify(value, null, 2) }],
+    content: [
+      {
+        type: "text",
+        text: stringifyBoundedToolResponse(value, DEFAULT_MAX_TOOL_RESPONSE_CHARS),
+      },
+    ],
     isError,
   }
 }

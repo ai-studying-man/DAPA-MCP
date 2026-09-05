@@ -9,6 +9,53 @@ afterEach(async () => {
 })
 
 describe("LawProvider", () => {
+  it("does not start an upstream request after the caller deadline", async () => {
+    // Given
+    let requestCount = 0
+    const api = await startFakeLawApi((_request, response) => {
+      requestCount += 1
+      response.setHeader("content-type", "application/json")
+      response.end(JSON.stringify({ LawSearch: { totalCnt: "0", law: [] } }))
+    })
+    openApis.push(api)
+    const provider = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+    // When
+    const result = await provider.search({ query: "방위사업", deadlineAt: 0 })
+
+    // Then
+    expect(result.status).toBe("SOURCE_UNAVAILABLE")
+    expect(result.errors[0]?.code).toBe("TIMEOUT")
+    expect(requestCount).toBe(0)
+  })
+
+  it("coalesces the same concurrent search requested by multiple employees", async () => {
+    // Given
+    let requestCount = 0
+    const api = await startFakeLawApi((_request, response) => {
+      requestCount += 1
+      response.setHeader("content-type", "application/json")
+      response.end(
+        JSON.stringify({
+          LawSearch: {
+            totalCnt: "1",
+            law: [{ 법령일련번호: "1", 법령명한글: "방위사업법", 현행연혁코드: "현행" }],
+          },
+        }),
+      )
+    })
+    openApis.push(api)
+    const provider = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+
+    // When
+    const results = await Promise.all(
+      Array.from({ length: 20 }, () => provider.search({ query: "방위사업법", types: ["law"] })),
+    )
+
+    // Then
+    expect(results.every((result) => result.status === "OK")).toBe(true)
+    expect(requestCount).toBe(1)
+  })
   it.each([
     [
       "interpretation",

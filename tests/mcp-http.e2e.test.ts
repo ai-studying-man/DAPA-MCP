@@ -167,12 +167,12 @@ describe("DAPA MCP Streamable HTTP", () => {
     })
   })
 
-  it.skipIf(process.env["RUN_LIVE_MCP_TESTS"] !== "1")(
+  it.skipIf(process.env["RUN_LIVE_MCP_TESTS"] !== "1" || !process.env["LAW_API_OC"])(
     "retrieves the live official law list through the HTTP MCP tool",
     async () => {
       const handler = createMcpHttpHandler({
         environment: {
-          LAW_API_OC: process.env["LAW_API_OC"] ?? "dusgh4847",
+          LAW_API_OC: process.env["LAW_API_OC"],
           DAPA_INFO_PATH: resolve(process.cwd(), "DAPA_info"),
         },
         workingDirectory: process.cwd(),
@@ -198,6 +198,15 @@ describe("DAPA MCP Streamable HTTP", () => {
 
       const text = result.content.find((item) => item.type === "text")
       expect(text?.type === "text" ? text.text : "").toContain("방위사업법")
+
+      const citationResult = CallToolResultSchema.parse(
+        await client.callTool({
+          name: "verify_citations",
+          arguments: { citations: ["방위사업법 제3조(계약해제)"] },
+        }),
+      )
+      const citationText = citationResult.content.find((item) => item.type === "text")
+      expect(citationText?.type === "text" ? citationText.text : "").toContain("CONTENT_MISMATCH")
     },
   )
 })

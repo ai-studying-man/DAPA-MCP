@@ -1,5 +1,6 @@
 import ky, { HTTPError, type KyInstance, TimeoutError } from "ky"
 import { DapaError } from "../../lib/errors/dapa-error.js"
+import { sharedUpstreamGate, type UpstreamGate } from "./upstream-gate.js"
 
 const DEFAULT_REFERER = "https://www.law.go.kr/"
 const DEFAULT_USER_AGENT = "dapa-mcp/0.1 (+https://github.com/ai-studying-man/DAPA-MCP)"
@@ -10,6 +11,8 @@ export type LawHttpConfig = {
   readonly retryLimit: number
   readonly maxTextResponseBytes: number
   readonly maxResourceResponseBytes: number
+  readonly maxConcurrency?: number
+  readonly maxQueue?: number
   readonly referer?: string
   readonly userAgent?: string
 }
@@ -19,15 +22,27 @@ export type LawHttpResource = {
   readonly contentType: string
 }
 
+type LawApiResponseKind = "json" | "html"
+
 export class LawHttpClient {
   private readonly client: KyInstance
   private readonly resourceClient: KyInstance
+  private readonly usableResponseRetryLimit: number
   private readonly maxTextResponseBytes: number
   private readonly maxResourceResponseBytes: number
+  private readonly gate: UpstreamGate
+  private readonly timeoutMs: number
 
   constructor(config: LawHttpConfig) {
+    this.usableResponseRetryLimit = config.retryLimit
     this.maxTextResponseBytes = config.maxTextResponseBytes
     this.maxResourceResponseBytes = config.maxResourceResponseBytes
+    this.gate = sharedUpstreamGate(
+      config.baseUrl,
+      config.maxConcurrency ?? 8,
+      config.maxQueue ?? 128,
+    )
+    this.timeoutMs = config.timeoutMs
     const headers = {
       referer: config.referer ?? DEFAULT_REFERER,
       "user-agent": config.userAgent ?? DEFAULT_USER_AGENT,
@@ -54,33 +69,104 @@ export class LawHttpClient {
     })
   }
 
-  async get(endpoint: string, searchParams: Readonly<Record<string, string>>): Promise<string> {
-    try {
-      const response = await this.client.get(endpoint, { searchParams })
-      const bytes = await readBoundedResponse(response, this.maxTextResponseBytes)
-      return new TextDecoder().decode(bytes)
-    } catch (error) {
-      if (!(error instanceof Error)) {
-        throw new DapaError("SOURCE_UNAVAILABLE", "법제처 API에 연결할 수 없습니다")
-      }
-      throwLawHttpError(error)
+  async get(
+    endpoint: string,
+    searchParams: Readonly<Record<string, string>>,
+    deadlineAt?: number,
+  ): Promise<string> {
+    return this.getText(endpoint, searchParams, "json", deadlineAt)
+  }
+
+  async getHtml(endpoint: string, searchParams: Readonly<Record<string, string>>): Promise<string> {
+    return this.getText(endpoint, searchParams, "html")
+  }
+
+  private async getText(
+    endpoint: string,
+    searchParams: Readonly<Record<string, string>>,
+    responseKind: LawApiResponseKind,
+    deadlineAt?: number,
+  ): Promise<string> {
+    return this.gate.run(
+      async () => {
+        try {
+          for (let attempt = 0; attempt <= this.usableResponseRetryLimit; attempt += 1) {
+            const response = await this.client.get(endpoint, {
+              searchParams,
+              timeout: this.requestTimeoutMs(deadlineAt),
+            })
+            const bytes = await readBoundedResponse(response, this.maxTextResponseBytes)
+            const text = new TextDecoder().decode(bytes)
+            if (isUsableApiResponse(text, response.headers.get("content-type"), responseKind)) {
+              return text
+            }
+          }
+          throw new DapaError(
+            "SOURCE_UNAVAILABLE",
+            "법제처 API가 빈 응답 또는 점검 페이지를 반환했습니다",
+          )
+        } catch (error) {
+          if (!(error instanceof Error)) {
+            throw new DapaError("SOURCE_UNAVAILABLE", "법제처 API에 연결할 수 없습니다")
+          }
+          throwLawHttpError(error)
+        }
+      },
+      deadlineAt === undefined ? {} : { deadlineAt },
+    )
+  }
+
+  private requestTimeoutMs(deadlineAt: number | undefined): number {
+    if (deadlineAt === undefined) return this.timeoutMs
+    const remaining = deadlineAt - Date.now()
+    if (remaining <= 0) {
+      throw new DapaError("TIMEOUT", "법령 검색의 전체 시간 한도를 초과했습니다")
     }
+    return Math.min(this.timeoutMs, remaining)
   }
 
   async getResource(url: URL): Promise<LawHttpResource> {
-    try {
-      const response = await this.resourceClient.get(url)
-      return {
-        bytes: await readBoundedResponse(response, this.maxResourceResponseBytes),
-        contentType: response.headers.get("content-type") ?? "application/octet-stream",
+    return this.gate.run(async () => {
+      try {
+        const response = await this.resourceClient.get(url)
+        return {
+          bytes: await readBoundedResponse(response, this.maxResourceResponseBytes),
+          contentType: response.headers.get("content-type") ?? "application/octet-stream",
+        }
+      } catch (error) {
+        if (!(error instanceof Error)) {
+          throw new DapaError("SOURCE_UNAVAILABLE", "법제처 API에 연결할 수 없습니다")
+        }
+        throwLawHttpError(error)
       }
-    } catch (error) {
-      if (!(error instanceof Error)) {
-        throw new DapaError("SOURCE_UNAVAILABLE", "법제처 API에 연결할 수 없습니다")
-      }
-      throwLawHttpError(error)
-    }
+    })
   }
+}
+
+function isUsableApiResponse(
+  text: string,
+  contentType: string | null,
+  responseKind: LawApiResponseKind,
+): boolean {
+  const normalized = text.trimStart().toLowerCase()
+  if (normalized.length === 0) return false
+  switch (responseKind) {
+    case "html":
+      return true
+    case "json":
+      return (
+        !contentType?.toLowerCase().includes("text/html") &&
+        !normalized.startsWith("<!doctype html") &&
+        !normalized.startsWith("<html") &&
+        !normalized.includes("location.assign(")
+      )
+    default:
+      return assertNever(responseKind)
+  }
+}
+
+function assertNever(value: never): never {
+  throw new DapaError("INTERNAL_ERROR", `처리되지 않은 법제처 응답 형식: ${String(value)}`)
 }
 
 async function readBoundedResponse(response: Response, maxBytes: number): Promise<ArrayBuffer> {

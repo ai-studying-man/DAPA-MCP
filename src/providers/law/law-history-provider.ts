@@ -10,7 +10,7 @@ export async function fetchLawHistory(
   input: { readonly lawName: string; readonly limit?: number },
 ): Promise<LegalHistoryResponse> {
   try {
-    const text = await http.get("lawSearch.do", {
+    const text = await http.getHtml("lawSearch.do", {
       OC: apiKey,
       target: "lsHistory",
       type: "HTML",

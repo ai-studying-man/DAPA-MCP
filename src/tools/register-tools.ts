@@ -17,6 +17,7 @@ import { READ_ONLY_ANNOTATIONS, textResult } from "./tool-response.js"
 const LEGAL_SOURCE_TYPES = [
   "law",
   "administrative_rule",
+  "local_ordinance",
   "precedent",
   "constitutional_case",
   "interpretation",
@@ -26,7 +27,7 @@ const LEGAL_SOURCE_TYPES = [
 
 const SearchLegalSchema = {
   query: z.string().min(1).describe("법령·판례·해석례 검색어"),
-  types: z.array(z.enum(LEGAL_SOURCE_TYPES)).max(7).default(["law"]),
+  types: z.array(z.enum(LEGAL_SOURCE_TYPES)).max(8).default(["law"]),
   currentOnly: z.boolean().default(true),
   forceRefresh: z
     .boolean()
@@ -40,6 +41,7 @@ const SearchLegalSchema = {
 const GetLegalDetailSchema = {
   documentId: z.string().min(1).describe("검색 결과의 documentId"),
   sourceType: z.enum(LEGAL_SOURCE_TYPES),
+  forceRefresh: z.boolean().default(false),
 }
 
 const VerifyCitationsSchema = {
@@ -71,6 +73,7 @@ type ToolDependencies = {
   readonly dapaPolicy: DapaPolicyProvider
   readonly citations: CitationVerifier
   readonly maxLawApiToolResponseChars: number
+  readonly legalContentSearchBudgetMs: number
 }
 
 export function registerTools(server: McpServer, dependencies: ToolDependencies): void {
@@ -78,7 +81,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
     "search_legal",
     {
       title: "공식 법령·판례 검색",
-      description: "공식 국가법령정보 API에서 법령·행정규칙·판례·해석례를 검색합니다.",
+      description: "공식 국가법령정보 API에서 법령·행정규칙·자치법규·판례·해석례를 검색합니다.",
       inputSchema: SearchLegalSchema,
       annotations: READ_ONLY_ANNOTATIONS,
     },
@@ -108,7 +111,7 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
   )
 
   registerLawApiTools(server, dependencies.lawApi, dependencies.maxLawApiToolResponseChars)
-  registerLegalContentTools(server, dependencies.law)
+  registerLegalContentTools(server, dependencies.law, dependencies.legalContentSearchBudgetMs)
 
   server.registerTool(
     "get_legal_history",
@@ -128,7 +131,8 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
     "verify_citations",
     {
       title: "법령 인용 검증",
-      description: "법령 조문 또는 사건번호가 공식 출처에 실제 존재하는지 검증합니다.",
+      description:
+        "법령·행정규칙·자치법규 조문 또는 판례·헌재 사건번호가 공식 출처에 실제 존재하는지 검증합니다.",
       inputSchema: VerifyCitationsSchema,
       annotations: READ_ONLY_ANNOTATIONS,
     },

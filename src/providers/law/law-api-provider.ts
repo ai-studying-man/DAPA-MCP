@@ -62,6 +62,8 @@ export class LawApiProvider {
       retryLimit: config.retryLimit ?? 2,
       maxTextResponseBytes: config.maxTextResponseBytes ?? 8 * 1024 * 1024,
       maxResourceResponseBytes: config.maxResourceResponseBytes ?? 25 * 1024 * 1024,
+      maxConcurrency: config.maxConcurrency ?? 8,
+      maxQueue: config.maxQueue ?? 128,
       ...(config.referer === undefined ? {} : { referer: config.referer }),
       ...(config.userAgent === undefined ? {} : { userAgent: config.userAgent }),
     })

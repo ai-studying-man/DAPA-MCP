@@ -7,19 +7,29 @@ export type ParsedCitation = {
   readonly kind: CitationKind
   readonly documentName?: string
   readonly article?: string
+  readonly claimedArticleTitle?: string
   readonly caseNumber?: string
 }
 
 export function parseCitation(_value: string): ParsedCitation {
   const value = _value.trim()
   const lawMatch = value.match(
-    /^(.+?(?:법|령|규칙|규정|훈령|예규|고시))\s*(제\d+조(?:의\d+)?(?:제\d+항)?(?:제\d+호)?)$/,
+    /^(.+?(?:법|령|규칙|규정|훈령|예규|고시|조례))\s*(제\d+조(?:의\d+)?)(?:\(([^()]+)\))?((?:제\d+항)?(?:제\d+호)?)$/,
   )
   if (lawMatch) {
     const documentName = lawMatch[1]
-    const article = lawMatch[2]
+    const articleBase = lawMatch[2]
+    const claimedArticleTitle = lawMatch[3]
+    const articleSuffix = lawMatch[4]
+    const article = articleBase === undefined ? undefined : `${articleBase}${articleSuffix ?? ""}`
     if (documentName !== undefined && article !== undefined) {
-      return { raw: value, kind: "law", documentName: documentName.trim(), article }
+      return {
+        raw: value,
+        kind: "law",
+        documentName: documentName.trim(),
+        article,
+        ...(claimedArticleTitle === undefined ? {} : { claimedArticleTitle }),
+      }
     }
   }
 

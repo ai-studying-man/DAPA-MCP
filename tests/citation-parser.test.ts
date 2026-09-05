@@ -34,6 +34,23 @@ describe("parseCitation", () => {
     })
   })
 
+  it("parses a claimed article title for content verification", () => {
+    // Given
+    const citation = "방위사업법 제3조(계약해제)"
+
+    // When
+    const parsed = parseCitation(citation)
+
+    // Then
+    expect(parsed).toEqual({
+      raw: citation,
+      kind: "law",
+      documentName: "방위사업법",
+      article: "제3조",
+      claimedArticleTitle: "계약해제",
+    })
+  })
+
   it("marks unsupported prose as unknown", () => {
     // Given
     const citation = "근거가 있을 것 같습니다"

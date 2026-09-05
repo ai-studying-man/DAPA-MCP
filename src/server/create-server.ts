@@ -15,6 +15,7 @@ export type ServerConfig = {
   readonly dapaPolicyPath: string
   readonly law: LawProviderConfig
   readonly maxLawApiToolResponseChars: number
+  readonly legalContentSearchBudgetMs: number
 }
 
 export type DapaServerDependencies = {
@@ -25,6 +26,7 @@ export type DapaServerDependencies = {
   readonly dapaPolicy: Awaited<ReturnType<typeof loadDapaPolicyProvider>>
   readonly citations: CitationVerifier
   readonly maxLawApiToolResponseChars: number
+  readonly legalContentSearchBudgetMs: number
 }
 
 export async function loadDapaServerDependencies(
@@ -42,6 +44,7 @@ export async function loadDapaServerDependencies(
     dapaPolicy,
     citations: new CitationVerifier(law),
     maxLawApiToolResponseChars: config.maxLawApiToolResponseChars,
+    legalContentSearchBudgetMs: config.legalContentSearchBudgetMs,
   }
 }
 

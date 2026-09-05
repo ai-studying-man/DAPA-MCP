@@ -1,63 +1,47 @@
-import { TtlCache } from "../../lib/cache/ttl-cache.js"
 import { DapaError } from "../../lib/errors/dapa-error.js"
-import type {
-  DapaSearchResult,
-  LegalHistoryResponse,
-  SearchResponse,
-  SourceType,
-} from "../../types/results.js"
+import type { DapaSearchResult, LegalHistoryResponse, SearchResponse } from "../../types/results.js"
 import { sanitizeUrlString } from "./law-api-sanitize.js"
 import { parseLawDetailDocument } from "./law-detail.js"
+import { LawDetailCache } from "./law-detail-cache.js"
 import { fetchLawHistory } from "./law-history-provider.js"
 import { LawHttpClient } from "./law-http.js"
+import type {
+  LawProviderConfig,
+  LegalDetailInput,
+  LegalSearchInput,
+  ProviderHealth,
+} from "./law-provider-types.js"
 import { parseLawSearchResponse } from "./law-response.js"
+import { LawSearchCache } from "./law-search-cache.js"
+import { rankSearchResults } from "./law-search-ranking.js"
 import { getTargetConfig, type LawTargetConfig } from "./target-config.js"
 
-export type LegalSearchInput = {
-  readonly query: string
-  readonly types?: readonly SourceType[]
-  readonly currentOnly?: boolean
-  readonly forceRefresh?: boolean
-  readonly asOfDate?: string
-  readonly organization?: string
-  readonly limit?: number
-  readonly page?: number
-}
-
-export type LawProviderConfig = {
-  readonly apiKey?: string
-  readonly baseUrl?: string
-  readonly timeoutMs?: number
-  readonly retryLimit?: number
-  readonly cacheTtlMs?: number
-  readonly maxTextResponseBytes?: number
-  readonly maxResourceResponseBytes?: number
-  readonly referer?: string
-  readonly userAgent?: string
-}
-
-export type LegalDetailInput = {
-  readonly documentId: string
-  readonly sourceType: SourceType
-}
-
-export type ProviderHealth = "healthy" | "not_configured" | "unavailable"
+export type {
+  LawProviderConfig,
+  LegalDetailInput,
+  LegalSearchInput,
+  ProviderHealth,
+} from "./law-provider-types.js"
 
 export class LawProvider {
   private readonly http: LawHttpClient
-  private readonly cache: TtlCache<readonly DapaSearchResult[]>
+  private readonly cache: LawSearchCache
+  private readonly detailCache: LawDetailCache
 
   constructor(private readonly config: LawProviderConfig) {
     this.http = new LawHttpClient({
       baseUrl: config.baseUrl ?? "https://www.law.go.kr/DRF",
-      timeoutMs: config.timeoutMs ?? 55_000,
-      retryLimit: config.retryLimit ?? 2,
+      timeoutMs: config.timeoutMs ?? 15_000,
+      retryLimit: config.retryLimit ?? 1,
       maxTextResponseBytes: config.maxTextResponseBytes ?? 8 * 1024 * 1024,
       maxResourceResponseBytes: config.maxResourceResponseBytes ?? 25 * 1024 * 1024,
+      maxConcurrency: config.maxConcurrency ?? 8,
+      maxQueue: config.maxQueue ?? 128,
       ...(config.referer === undefined ? {} : { referer: config.referer }),
       ...(config.userAgent === undefined ? {} : { userAgent: config.userAgent }),
     })
-    this.cache = new TtlCache(config.cacheTtlMs ?? 300_000)
+    this.cache = new LawSearchCache(config.cacheTtlMs ?? 300_000)
+    this.detailCache = new LawDetailCache(config.detailCacheTtlMs ?? 21_600_000)
   }
 
   health(): ProviderHealth {
@@ -96,7 +80,7 @@ export class LawProvider {
       organization === undefined
         ? results
         : results.filter((result) => result.organization?.includes(organization))
-    const limited = filtered.slice(0, input.limit ?? 10)
+    const limited = rankSearchResults(filtered, input.query).slice(0, input.limit ?? 10)
     if (errors.length > 0) {
       return {
         status: limited.length > 0 ? "PARTIAL_RESULT" : "SOURCE_UNAVAILABLE",
@@ -170,25 +154,42 @@ export class LawProvider {
       )
     }
     const detailTarget = target.target
-    const idParameter = target.sourceType === "law" ? "MST" : "ID"
+    const idParameter =
+      target.sourceType === "law" || target.sourceType === "local_ordinance" ? "MST" : "ID"
+    const request = this.detailCache.getOrLoad(
+      `${detailTarget}:${_input.documentId}`,
+      _input.forceRefresh === true,
+      async () => {
+        try {
+          const text = await this.http.get(
+            "lawService.do",
+            {
+              OC: this.config.apiKey ?? "",
+              target: detailTarget,
+              type: "JSON",
+              [idParameter]: _input.documentId,
+            },
+            _input.deadlineAt,
+          )
+          const parsed = parseLawDetailDocument(
+            text,
+            _input.documentId,
+            target,
+            new Date().toISOString(),
+          )
+          return { status: "OK", results: [parsed.result], detail: parsed.detail, errors: [] }
+        } catch (error) {
+          if (!(error instanceof Error)) {
+            return unavailable("INTERNAL_ERROR", "알 수 없는 내부 오류")
+          }
+          const shape = toErrorShape(error)
+          return unavailable(shape.code, shape.message)
+        }
+      },
+    )
     try {
-      const text = await this.http.get("lawService.do", {
-        OC: this.config.apiKey ?? "",
-        target: detailTarget,
-        type: "JSON",
-        [idParameter]: _input.documentId,
-      })
-      const parsed = parseLawDetailDocument(
-        text,
-        _input.documentId,
-        target,
-        new Date().toISOString(),
-      )
-      return { status: "OK", results: [parsed.result], detail: parsed.detail, errors: [] }
+      return await waitForDeadline(request, _input.deadlineAt)
     } catch (error) {
-      if (!(error instanceof Error)) {
-        return unavailable("INTERNAL_ERROR", "알 수 없는 내부 오류")
-      }
       const shape = toErrorShape(error)
       return unavailable(shape.code, shape.message)
     }
@@ -209,33 +210,58 @@ export class LawProvider {
       input.currentOnly ?? true,
       input.organization ?? "",
       input.asOfDate ?? "",
+      input.searchScope ?? "title",
       input.page ?? 1,
     ].join(":")
-    const cached = input.forceRefresh === true ? undefined : this.cache.get(key)
-    if (cached !== undefined) return cached
-
-    const text = await this.http.get("lawSearch.do", {
-      OC: this.config.apiKey ?? "",
-      target: resolvedTarget.target,
-      type: "JSON",
-      query: input.query,
-      display: String(Math.min(input.organization === undefined ? (input.limit ?? 10) : 100, 100)),
-      page: String(input.page ?? 1),
-      ...(input.asOfDate === undefined
-        ? {}
-        : {
-            efYd: `${input.asOfDate.replaceAll("-", "")}~${input.asOfDate.replaceAll("-", "")}`,
-          }),
-    })
-    const parsed = parseLawSearchResponse(text, resolvedTarget, new Date().toISOString())
-    const results =
-      input.currentOnly === false || input.asOfDate !== undefined
+    const request = this.cache.getOrLoad(key, input.forceRefresh === true, async () => {
+      const text = await this.http.get(
+        "lawSearch.do",
+        {
+          OC: this.config.apiKey ?? "",
+          target: resolvedTarget.target,
+          type: "JSON",
+          query: input.query,
+          display: String(
+            Math.min(input.organization === undefined ? Math.max(input.limit ?? 10, 20) : 100, 100),
+          ),
+          page: String(input.page ?? 1),
+          ...(input.searchScope === "content" ? { search: "2" } : {}),
+          ...(input.asOfDate === undefined
+            ? {}
+            : {
+                efYd: `${input.asOfDate.replaceAll("-", "")}~${input.asOfDate.replaceAll("-", "")}`,
+              }),
+        },
+        input.deadlineAt,
+      )
+      const parsed = parseLawSearchResponse(text, resolvedTarget, new Date().toISOString())
+      return input.currentOnly === false || input.asOfDate !== undefined
         ? parsed.results
         : parsed.results.filter(
             (result) => result.status !== "historical" && result.status !== "repealed",
           )
-    if (parsed.totalCount > 0) this.cache.set(key, results)
-    return results
+    })
+    return waitForDeadline(request, input.deadlineAt)
+  }
+}
+
+async function waitForDeadline<T>(request: Promise<T>, deadlineAt: number | undefined): Promise<T> {
+  if (deadlineAt === undefined) return request
+  const remaining = deadlineAt - Date.now()
+  if (remaining <= 0) {
+    throw new DapaError("TIMEOUT", "법령 검색의 전체 시간 한도를 초과했습니다")
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(
+      () => reject(new DapaError("TIMEOUT", "법령 검색의 전체 시간 한도를 초과했습니다")),
+      remaining,
+    )
+  })
+  try {
+    return await Promise.race([request, timeout])
+  } finally {
+    if (timer !== undefined) clearTimeout(timer)
   }
 }
 

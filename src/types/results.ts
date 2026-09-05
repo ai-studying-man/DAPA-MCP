@@ -1,6 +1,7 @@
 export const SOURCE_TYPES = [
   "law",
   "administrative_rule",
+  "local_ordinance",
   "precedent",
   "constitutional_case",
   "interpretation",
