@@ -103,40 +103,60 @@ LAW_API_OC="<your-oc>" npm run backtest:law-api
 
 | 이름 | 필수 | 기본값 | 설명 |
 |---|---:|---:|---|
-| `LAW_API_OC` | 아니오 | 서버 기본값 사용 | 국가법령정보 공동활용 인증값; 운영 환경에서는 환경변수로 설정 |
-| `LAW_API_TIMEOUT_MS` | 아니오 | `55000` | 요청 timeout; 60초 Vercel 함수 한도 내 느린 지식베이스 API 대응 |
-| `LAW_API_RETRY_LIMIT` | 아니오 | `2` | 429/5xx 재시도 상한 |
+| `LAW_API_OC` | 예 | 없음 | 국가법령정보 공동활용 인증값; 환경변수 또는 로컬 `.env`로 설정 |
+| `LAW_API_TIMEOUT_MS` | 아니오 | `15000` | 개별 공식 API 요청 timeout; Vercel 함수 한도 안에서 부분 결과를 반환하도록 제한 |
+| `LAW_API_RETRY_LIMIT` | 아니오 | `1` | 429/5xx 및 빈 응답·점검 HTML 재시도 상한 |
 | `LAW_API_CACHE_TTL_MS` | 아니오 | `300000` | API 검색 캐시 TTL(밀리초), `0`이면 캐시 비활성화 |
+| `LAW_API_DETAIL_CACHE_TTL_MS` | 아니오 | `21600000` | 법령 상세 본문 캐시 TTL(기본 6시간), `0`이면 캐시 비활성화 |
 | `LAW_API_MAX_TEXT_RESPONSE_BYTES` | 아니오 | `8388608` | JSON/HTML API 응답 최대 바이트 |
 | `LAW_API_MAX_RESOURCE_RESPONSE_BYTES` | 아니오 | `26214400` | 별표·서식 파일 최대 바이트 |
+| `LAW_API_MAX_CONCURRENCY` | 아니오 | `8` | 서버 인스턴스 하나가 국가법령정보에 동시에 보내는 요청 상한; 모든 법령 Provider가 공유 |
+| `LAW_API_MAX_QUEUE` | 아니오 | `128` | 서버 인스턴스별 공식 API 대기 요청 상한; 초과 요청은 빠르게 제한 오류로 반환 |
+| `LAW_API_CONTENT_SEARCH_BUDGET_MS` | 아니오 | `25000` | 통합 목록·본문 검색 전체 시간 예산; 남은 시간이 없으면 새 공식 API 호출을 시작하지 않고 부분 결과 반환 |
 | `LAW_API_MAX_TOOL_RESPONSE_CHARS` | 아니오 | `250000` | 법령 API MCP 도구의 JSON 출력 최대 문자 수 |
 | `LAW_API_REFERER` | 아니오 | `https://www.law.go.kr/` | 클라우드에서 공식 API에 전달할 Referer |
 | `LAW_API_USER_AGENT` | 아니오 | `dapa-mcp/0.1 (...)` | 공식 API에 전달할 서버 식별자 |
 | `MCP_MAX_REQUEST_BYTES` | 아니오 | `1048576` | HTTP MCP 요청 본문 최대 바이트(1 MiB) |
 | `DAPA_INFO_PATH` | 아니오 | `./DAPA_info` | 공개지식 루트 |
 
-서버는 설정된 기본 인증값 또는 `LAW_API_OC` 환경변수의 값을 사용한다. 인증값 자체는
-저장소, 문서, URL, 로그에 기록하지 않는다. `.env`는 Git에서 제외된다.
+서버는 `LAW_API_OC` 환경변수 또는 로컬 `.env`에 설정된 인증값을 사용한다. 인증값 자체는
+저장소, 문서, URL, 로그에 기록하지 않는다. `.env`는 Git에서 제외된다. 값이 없으면 서버는
+시작되지만 `source_health`에서 `law: not_configured`로 알려 주고 법령 API 호출은 하지 않는다.
 
 ### 국가법령정보 API 설정
 
-별도 인증 절차 없이 서버에 설정된 값으로 법령 API를 사용할 수 있다. 자체 인증값이 있으면
-MCP Client가 서버를 시작할 때 `LAW_API_OC` 환경변수로 전달하고, `source_health`에서
+국가법령정보 공동활용 인증값을 발급받은 뒤 MCP Client가 서버를 시작할 때 `LAW_API_OC`
+환경변수로 전달하고, `source_health`에서
 `law: healthy`를 확인한다. 공개 Vercel 배포에서는 Project Settings의 환경변수에 저장하고
 문서나 클라이언트 설정에 값을 직접 넣지 않는다.
+
+### 조직 배포 기준
+
+여러 직원이 사용하는 운영 구성은 다음 흐름을 기준으로 한다.
+
+```text
+직원용 LLM → 조직 OAuth/SSO → DAPA MCP 여러 인스턴스 → 공용 Redis 캐시 → 국가법령정보 API
+                                      └→ 지연·오류율·호출량 모니터링
+```
+
+현재 저장소는 공식 데이터 파싱, 인스턴스 안의 검색·본문 캐시, 동일 검색 병합,
+공식 API 동시 호출 상한과 통합 검색 시간 예산을 제공한다. 반면 조직 사용자 인증과
+인스턴스 사이의 공용 Redis 캐시는 배포 환경의 인증 제공자와 저장소를 선택해야 하므로
+기본 코드에 임의의 사업자나 계정을 고정하지 않는다. 운영 전에는 `No authentication`
+구성을 조직 OAuth로 바꾸고, 사용자별 rate limit과 공용 캐시를 연결해야 한다.
 
 ## MCP 도구
 
 | 도구 | 역할 |
 |---|---|
-| `search_legal` | 법령·행정규칙·판례·헌재·해석례·행정심판 검색 |
-| `search_legal_content` | 국가법령정보 API 후보 목록을 조회한 뒤 각 문서의 상세 본문·조문을 함께 조회 |
+| `search_legal` | 법령·행정규칙·자치법규·판례·헌재·해석례·행정심판 검색 |
+| `search_legal_content` | 법령·행정규칙·자치법규·판례·헌재·해석례·행정심판의 자연어 본문검색; 자료 유형 자동 판별, 최대 500자, 기본 `fast`, 전체 검토는 `thorough` |
 | `get_legal_detail` | 검색 결과 `documentId` 상세조회 |
 | `get_legal_history` | 법령 제정·개정·폐지 연혁 조회 |
 | `list_legal_apis` | DAPA 관련 국가법령정보 14개 범주·40개 목록/본문 API 카탈로그 조회 |
 | `query_legal_api` | 카탈로그 `apiId`로 공식 목록·본문을 온디맨드 조회 |
 | `get_legal_api_body` | 목록 `apiId`와 결과 식별자로 본문 API 자동 연결; 별표·서식 파일 본문 추출 |
-| `verify_citations` | 법령 조문과 사건번호 검증 |
+| `verify_citations` | 법령명·조문번호·표기된 조문제목과 사건번호 검증 |
 | `search_dapa_info` | 조직·용어·업무 공개지식 검색 |
 | `get_dapa_organization` | 조직명·별칭 상세조회 |
 | `search_dapa_policy` | 업무·정책 메뉴와 하위 탭의 본문 검색 |
@@ -181,11 +201,19 @@ MCP 서버는 연결 초기화 때 Codex, Claude 등 지원 클라이언트에 �
 응답의 `temporalScope`로 적용 범위(`current`, `all`, `as_of`, `not_applicable`)를 확인할 수 있다.
 법령·행정규칙 외 구분은 시간 필터가 적용되지 않으면 `not_applicable`로 명시한다.
 
-`search_legal_content`는 입력 문장의 원형·공백 정리·공백 제거 변형을 사용해 최대 2페이지의
-후보를 수집한 뒤 공식 상세 본문을 조회한다. 본문에서 질의가 확인된 결과는 `match: "content"`,
-본문 확인 없이 검색 메타데이터만 일치한 결과는 `match: "metadata"`로 구분하고 본문 일치 결과를
-앞에 배치한다. 한 후보가 여러 국가법령정보 문서와 연결되면 `get_dapa_legal_content`의
-`matches` 배열에 각 문서의 본문을 모두 반환한다.
+`search_legal_content`의 기본 `fast` 모드는 법령·행정규칙·자치법규·판례·헌재결정례·법령해석례·행정심판례에서 입력 문장과 핵심 용어로 첫 페이지를 조회하고,
+상위 3개 본문에서 직접 근거가 확인되면 즉시 반환한다. 근거가 부족할 때만 요청한 `limit` 범위에서
+최대 5개까지 확장한다. `thorough` 모드는 검색어 최대 3개·2페이지·본문 최대 10개를 확인한다.
+본문 요청은 작은 묶음으로 제한하며 동일 검색과 동일 문서의 동시 요청은 하나로 합치고 성공한 상세 본문은
+기본 6시간 재사용한다. 본문에서 질의가 확인된 결과는 `match: "content"`, 검색 메타데이터만
+일치한 결과는 `match: "metadata"`로 구분한다. 법령·행정규칙은 관련 조문을, 판례 계열은 관련 판단 원문을 `excerpts`로 제한해 반환한다. 한 후보가 여러 국가법령정보 문서와 연결되면
+`get_dapa_legal_content`의 `matches` 배열에 각 문서의 본문을 모두 반환한다.
+
+동시 직원 요청은 서버 인스턴스별 `LAW_API_MAX_CONCURRENCY` 상한을 공유해 국가법령정보
+API로 한꺼번에 몰리지 않게 하고, `LAW_API_MAX_QUEUE`를 넘는 요청은 무한 대기시키지 않는다.
+목록과 본문 조회, 대기열은 모두 같은 전체 시간 예산을 사용한다. 이 메모리 캐시와 상한은 Vercel의 서로 다른 함수
+인스턴스 사이에는 공유되지 않는다. 조직 운영에서는 Redis 같은 공용 캐시, 사용자 인증,
+사용자별 rate limit과 지연·오류율 모니터링을 배포 계층에 별도로 구성해야 한다.
 
 ### 국가법령정보 API 범위
 
@@ -268,10 +296,9 @@ v0.1.0은 `.mcpb` 패키지를 제공하지 않으므로 개발 중에는 Claude
 ### ChatGPT와 OpenAI API
 
 Vercel 배포 후 ChatGPT 개발자 모드의 앱 생성 화면에
-`https://<Vercel 도메인>/law`를 입력하고 인증 방식은 **No authentication**으로 선택한다.
-서버는 공개 HTTPS Streamable HTTP를 제공하므로 Secure MCP Tunnel은 필요하지 않다.
-Vercel의 Deployment Protection이 이 경로를 로그인 화면으로 막으면 도구 스캔이 실패하므로
-Production 배포는 공개 접근 가능해야 한다.
+`https://<Vercel 도메인>/law`를 입력한다. 개인 개발·검증 배포만 **No authentication**을
+사용할 수 있고, 직원용 운영 배포는 회사 OAuth/SSO가 세 MCP 경로를 모두 보호해야 한다.
+Vercel의 일반 로그인 화면이 아니라 MCP 클라이언트가 사용할 수 있는 OAuth 인증이어야 한다.
 
 Vercel 배포 체크리스트와 ChatGPT, Claude, Gemini, Codex의 등록 절차는
 [클라이언트 연결 가이드](./docs/REMOTE_MCP.md)를 따른다.
@@ -347,8 +374,8 @@ npm run build
 ## 보안과 법률상 주의
 
 - 공개 가능한 정보만 저장한다. 개인정보, 비공개 사업정보, 군사기밀, 내부망 주소를 금지한다.
-- 공개 HTTP 서버는 애플리케이션 인증을 요구하지 않으므로 Vercel Firewall에서 `/law`와
-  `/api/mcp`에 IP별 rate limit을 적용하고 사용량·오류율을 모니터링한다.
+- 직원용 HTTP 서버는 조직 OAuth/SSO로 `/law`, `/mcp`, `/api/mcp`를 모두 보호하고
+  사용자별·조직 전체 rate limit, 허용 Origin, 감사 로그를 적용한다.
 - MCP 결과는 법률의견이나 정책결정을 대신하지 않는다.
 - `verified: true`는 공식 Source에서 해당 데이터를 조회했다는 뜻이지 법적 판단의 보증이 아니다.
 - 뉴스는 향후 추가되어도 법적 근거로 사용하지 않는다.

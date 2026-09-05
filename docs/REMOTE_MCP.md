@@ -13,8 +13,9 @@ Codex / Claude Code / Gemini CLI
     └── 로컬 clone의 dist/index.js
 ```
 
-공개 HTTPS 방식은 직원 PC에 Git, Node.js 또는 터널을 설치하지 않아도 된다. 서버 인증 방식은
-`No authentication`이며, 국가법령정보 API 인증값은 서버 내부 설정으로만 사용한다. GitHub URL
+공개 HTTPS 방식은 직원 PC에 Git, Node.js 또는 터널을 설치하지 않아도 된다. 다만 조직 운영에서는
+반드시 회사 OAuth/SSO로 직원을 인증하고 사용자별 호출 제한과 감사 로그를 적용해야 한다. 현재 저장소의
+HTTP 엔드포인트는 인증 기능이 없는 개발·검증용이므로 인터넷에 공개한 채 운영하지 않는다. 국가법령정보 API 인증값은 서버 내부 설정으로만 사용한다. GitHub URL
 자체는 MCP 주소가 아니고, Vercel이 배포한 HTTPS URL이 MCP 주소다. 인증값은 저장소, URL,
 로그와 클라이언트 설정에 기록하지 않는다.
 
@@ -45,7 +46,7 @@ Environment Variables에 `LAW_API_OC`를 저장하는 방식을 권장한다. `.
 
 배포 후 Vercel에서 다음을 확인한다.
 
-1. Production Deployment Protection이 로그인이나 암호를 요구하지 않게 한다.
+1. 회사 OAuth/SSO 프록시 또는 MCP 인증 계층이 `/law`, `/mcp`, `/api/mcp`를 보호하는지 확인한다.
 2. `/health`가 HTTP 200과 `{"status":"ok"}`를 반환하는지 확인한다.
 3. Firewall에서 Request Path가 `/law` 또는 `/api/mcp`인 요청에 IP별 rate limit을 설정한다.
    초기값은 1분당 60회로 시작하고 실제 사용량을 본 뒤 조정한다.
@@ -60,7 +61,7 @@ Environment Variables에 `LAW_API_OC`를 저장하는 방식을 권장한다. `.
 1. ChatGPT 웹에서 **Settings → Apps → Advanced Settings**의 Developer mode를 켠다.
 2. **Settings → Apps → Create** 또는 워크스페이스의 **Apps → Create**를 연다.
 3. 이름에 `DAPA MCP`, endpoint에 `https://<도메인>/law`를 입력한다.
-4. 인증 방식은 **No authentication**을 선택한다.
+4. 인증 방식은 회사 관리자가 구성한 **OAuth**를 선택한다. 개발용 공개 배포에서만 `No authentication`을 사용한다.
 5. **Scan Tools**를 눌러 읽기 전용 도구 17개가 표시되는지 확인하고 생성한다.
 6. 새 채팅의 도구 메뉴에서 DAPA MCP를 선택해 `source_health`를 호출한다.
 
