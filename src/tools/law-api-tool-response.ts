@@ -6,6 +6,12 @@ export function stringifyBoundedToolResponse(value: unknown, maxChars: number): 
   if (serialized.length <= maxChars) return serialized
 
   const record = isRecord(value) ? value : {}
+  const errorCodes = Array.isArray(record["errors"])
+    ? record["errors"]
+        .filter(isRecord)
+        .map((error) => error["code"])
+        .filter((code): code is string => typeof code === "string")
+    : []
   const envelope = (previewChars: number) =>
     JSON.stringify(
       {
@@ -15,6 +21,9 @@ export function stringifyBoundedToolResponse(value: unknown, maxChars: number): 
           ? { requestedApiId: record["requestedApiId"] }
           : {}),
         truncated: true,
+        errors: [...new Set(errorCodes)].slice(0, 8).map((code) => ({ code: code.slice(0, 80) })),
+        errorCount: errorCodes.length,
+        nextAction: "narrow_or_page",
         originalChars: serialized.length,
         maxChars,
         message: TRUNCATION_MESSAGE,

@@ -1,9 +1,7 @@
 import type { DapaSearchResult, LegalDocumentDetail, ResponseStatus } from "../../types/results.js"
-import {
-  extractMatchingExcerpts,
-  firstMatchingQueryIndex,
-  selectMatchingDetail,
-} from "./content-search-evidence.js"
+import { type ContentSearchCoverage, contentSearchCoverage } from "./content-search-coverage.js"
+import { type EvidenceCoverage, firstMatchingQueryIndex } from "./content-search-evidence.js"
+import { hydrateDocuments } from "./content-search-hydration.js"
 import {
   inferLegalSourceTypes,
   isDocumentTitleQuery,
@@ -12,7 +10,9 @@ import {
   SEARCH_PROFILES,
   titleRelevanceScore,
 } from "./content-search-plan.js"
-import type { LawProvider, LegalDetailInput, LegalSearchInput } from "./law-provider.js"
+import { discoverMajorDocuments } from "./content-search-routing.js"
+import { defensePriority } from "./defense-priority.js"
+import type { LawProvider, LegalSearchInput } from "./law-provider.js"
 
 export type { LegalContentSearchMode } from "./content-search-plan.js"
 export { LEGAL_CONTENT_SEARCH_MODES } from "./content-search-plan.js"
@@ -30,6 +30,7 @@ export type LegalContentHit = {
   readonly match: "content" | "metadata"
   readonly detail?: LegalDocumentDetail
   readonly excerpts?: readonly string[]
+  readonly evidenceCoverage?: EvidenceCoverage
   readonly errors: readonly { readonly code: string; readonly message: string }[]
 }
 
@@ -37,20 +38,13 @@ export type LegalContentSearchResponse = {
   readonly status: ResponseStatus
   readonly results: readonly LegalContentHit[]
   readonly errors: readonly { readonly code: string; readonly message: string }[]
+  readonly coverage?: ContentSearchCoverage
 }
 
 type SearchState = {
   readonly candidates: ReadonlyMap<string, DapaSearchResult>
   readonly errors: readonly { readonly code: string; readonly message: string }[]
-}
-
-type HydrationRequest = {
-  readonly law: Pick<LawProvider, "getDetail">
-  readonly documents: readonly DapaSearchResult[]
-  readonly queries: readonly string[]
-  readonly forceRefresh: boolean
-  readonly concurrency: number
-  readonly deadlineAt: number
+  readonly searches: readonly Awaited<ReturnType<LawProvider["search"]>>[]
 }
 
 export async function searchLegalContent(
@@ -67,11 +61,32 @@ export async function searchLegalContent(
     types: input.types ?? inferLegalSourceTypes(input.query),
     deadlineAt: input.deadlineAt ?? Date.now() + (input.timeBudgetMs ?? 25_000),
   } satisfies LegalSearchInput
-  let state = await searchPages(law, searchInput, queries, 1, profile.searchPages)
-  if (state.candidates.size === 0) return emptyResponse(state.errors)
+  const major = await discoverMajorDocuments(law, searchInput)
+  const routed = major.documents.length > 0
+  let majorDocumentsOnly = routed
+  let state = mergeSearchResults(major.searches)
+  if (!routed)
+    state = mergeSearchStates(
+      state,
+      await searchPages(law, searchInput, queries, 1, profile.searchPages),
+    )
+  if (state.candidates.size === 0)
+    return {
+      ...emptyResponse(state.errors),
+      coverage: contentSearchCoverage({
+        searches: state.searches,
+        candidateDocuments: 0,
+        outcomes: [],
+        returnedDocuments: 0,
+        majorDocumentsOnly,
+        omittedQueryVariants: Math.max(0, queryPlan.searchQueries.length - queries.length),
+      }),
+    }
 
-  const rankedCandidates = rankCandidates([...state.candidates.values()], queries)
-  const initialCount = Math.min(limit, profile.initialDocuments)
+  const rankedCandidates = routed
+    ? major.documents
+    : rankCandidates([...state.candidates.values()], queries)
+  const initialCount = Math.min(limit, routed ? major.documents.length : profile.initialDocuments)
   let outcomes = await hydrateDocuments({
     law,
     documents: rankedCandidates.slice(0, initialCount),
@@ -79,18 +94,29 @@ export async function searchLegalContent(
     forceRefresh: input.forceRefresh === true,
     concurrency: profile.detailConcurrency,
     deadlineAt: searchInput.deadlineAt,
+    currentOnly: input.currentOnly ?? true,
+    ...(input.asOfDate === undefined ? {} : { asOfDate: input.asOfDate }),
   })
 
-  if (mode === "fast" && !hasContentMatch(outcomes) && outcomes.length < limit) {
-    if (state.candidates.size < limit) {
+  const expandRouted = routed && (mode === "thorough" || !hasContentMatch(outcomes))
+  if (expandRouted || (mode === "fast" && !hasContentMatch(outcomes) && outcomes.length < limit)) {
+    if (expandRouted) {
+      majorDocumentsOnly = false
+      state = mergeSearchStates(
+        state,
+        await searchPages(law, searchInput, queries, 1, profile.searchPages),
+      )
+    } else if (state.candidates.size < limit) {
       state = mergeSearchStates(state, await searchPages(law, searchInput, queries, 2, 1))
     }
     const hydratedKeys = new Set(
-      outcomes.map(({ document }) => `${document.sourceType}:${document.documentId}`),
+      rankedCandidates
+        .slice(0, initialCount)
+        .map((document) => `${document.sourceType}:${document.documentId}`),
     )
     const remaining = rankCandidates([...state.candidates.values()], queries)
       .filter((document) => !hydratedKeys.has(`${document.sourceType}:${document.documentId}`))
-      .slice(0, limit - outcomes.length)
+      .slice(0, expandRouted ? limit : limit - outcomes.length)
     outcomes = [
       ...outcomes,
       ...(await hydrateDocuments({
@@ -100,11 +126,26 @@ export async function searchLegalContent(
         forceRefresh: input.forceRefresh === true,
         concurrency: profile.detailConcurrency,
         deadlineAt: searchInput.deadlineAt,
+        currentOnly: input.currentOnly ?? true,
+        ...(input.asOfDate === undefined ? {} : { asOfDate: input.asOfDate }),
       })),
     ]
   }
 
-  return completedResponse(outcomes, state.errors, queryPlan.evidenceQueries)
+  const response = completedResponse(outcomes, state.errors, queryPlan.evidenceQueries)
+  const results = response.results.slice(0, limit)
+  return {
+    ...response,
+    results,
+    coverage: contentSearchCoverage({
+      searches: state.searches,
+      candidateDocuments: state.candidates.size,
+      outcomes,
+      returnedDocuments: results.length,
+      majorDocumentsOnly,
+      omittedQueryVariants: Math.max(0, queryPlan.searchQueries.length - queries.length),
+    }),
+  }
 }
 
 async function searchPages(
@@ -142,52 +183,17 @@ function mergeSearchResults(
       candidates.set(`${document.sourceType}:${document.documentId}`, document)
     }
   }
-  return { candidates, errors }
+  return { candidates, errors, searches }
 }
 
 function mergeSearchStates(left: SearchState, right: SearchState): SearchState {
   const candidates = new Map(left.candidates)
   for (const [key, document] of right.candidates) candidates.set(key, document)
-  return { candidates, errors: [...left.errors, ...right.errors] }
-}
-
-async function hydrateDocuments(request: HydrationRequest): Promise<readonly LegalContentHit[]> {
-  const outcomes: LegalContentHit[] = []
-  let nextIndex = 0
-  await Promise.all(
-    Array.from({ length: Math.min(request.concurrency, request.documents.length) }, async () => {
-      while (nextIndex < request.documents.length) {
-        const index = nextIndex++
-        const document = request.documents[index]
-        if (document === undefined) return
-        const detailInput: LegalDetailInput = {
-          documentId: document.documentId,
-          sourceType: document.sourceType,
-          forceRefresh: request.forceRefresh,
-          deadlineAt: request.deadlineAt,
-        }
-        const detail = await request.law.getDetail(detailInput)
-        const matchingDetail =
-          detail.detail === undefined
-            ? undefined
-            : selectMatchingDetail(detail.detail, request.queries)
-        const excerpts =
-          matchingDetail === undefined
-            ? extractMatchingExcerpts(detail.results[0]?.content, request.queries)
-            : []
-        const hasEvidence = matchingDetail !== undefined || excerpts.length > 0
-        outcomes[index] = {
-          document,
-          status: detail.status,
-          match: detail.status === "OK" && hasEvidence ? "content" : "metadata",
-          ...(matchingDetail === undefined ? {} : { detail: matchingDetail }),
-          ...(excerpts.length === 0 ? {} : { excerpts }),
-          errors: detail.errors,
-        } satisfies LegalContentHit
-      }
-    }),
-  )
-  return outcomes
+  return {
+    candidates,
+    errors: [...left.errors, ...right.errors],
+    searches: [...left.searches, ...right.searches],
+  }
 }
 
 function completedResponse(
@@ -202,8 +208,10 @@ function completedResponse(
     .filter(({ outcome }) => outcome.match === "content")
     .sort(
       (left, right) =>
+        defensePriority(right.outcome.document) - defensePriority(left.outcome.document) ||
         contentEvidenceScore(right.outcome, evidenceQueries) -
-          contentEvidenceScore(left.outcome, evidenceQueries) || left.index - right.index,
+          contentEvidenceScore(left.outcome, evidenceQueries) ||
+        left.index - right.index,
     )
     .map(({ outcome }) => outcome)
   const ordered =

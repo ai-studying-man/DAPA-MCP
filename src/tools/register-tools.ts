@@ -9,21 +9,11 @@ import type { CitationVerifier } from "../providers/law/citation-verifier.js"
 import type { LawApiProvider } from "../providers/law/law-api-provider.js"
 import type { LawProvider } from "../providers/law/law-provider.js"
 import type { SearchResponse } from "../types/results.js"
+import { GetLegalDetailSchema, LEGAL_SOURCE_TYPES } from "./legal-tool-schemas.js"
 import { registerDapaPolicyTools } from "./register-dapa-policy-tools.js"
 import { registerLawApiTools } from "./register-law-api-tools.js"
 import { registerLegalContentTools } from "./register-legal-content-tools.js"
 import { READ_ONLY_ANNOTATIONS, textResult } from "./tool-response.js"
-
-const LEGAL_SOURCE_TYPES = [
-  "law",
-  "administrative_rule",
-  "local_ordinance",
-  "precedent",
-  "constitutional_case",
-  "interpretation",
-  "administrative_appeal",
-  "committee_decision",
-] as const
 
 const SearchLegalSchema = {
   query: z.string().min(1).describe("법령·판례·해석례 검색어"),
@@ -36,12 +26,6 @@ const SearchLegalSchema = {
   asOfDate: z.iso.date().optional().describe("특정 시점 YYYY-MM-DD; 미지원 시 명시적 오류 반환"),
   organization: z.string().min(1).optional(),
   limit: z.number().int().min(1).max(100).default(10),
-}
-
-const GetLegalDetailSchema = {
-  documentId: z.string().min(1).describe("검색 결과의 documentId"),
-  sourceType: z.enum(LEGAL_SOURCE_TYPES),
-  forceRefresh: z.boolean().default(false),
 }
 
 const VerifyCitationsSchema = {
@@ -107,7 +91,16 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
       inputSchema: GetLegalDetailSchema,
       annotations: READ_ONLY_ANNOTATIONS,
     },
-    async (input) => toToolResult(await dependencies.law.getDetail(input)),
+    async (input) =>
+      toToolResult(
+        await dependencies.law.getDetail({
+          documentId: input.documentId,
+          sourceType: input.sourceType,
+          forceRefresh: input.forceRefresh,
+          currentOnly: input.currentOnly,
+          ...(input.asOfDate === undefined ? {} : { asOfDate: input.asOfDate }),
+        }),
+      ),
   )
 
   registerLawApiTools(server, dependencies.lawApi, dependencies.maxLawApiToolResponseChars)

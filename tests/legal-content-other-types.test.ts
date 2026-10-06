@@ -186,7 +186,9 @@ describe("searchLegalContent for case materials", () => {
       response.end(
         JSON.stringify({
           AdmRulService: {
-            행정규칙기본정보: { 행정규칙명: id },
+            행정규칙기본정보: {
+              행정규칙명: id === "narrow" ? "절충교역 자산 징수 고시" : "절충교역 지침",
+            },
             조문내용:
               id === "narrow"
                 ? ["제1조 절충교역 자산", "제2조 절충교역 징수"]

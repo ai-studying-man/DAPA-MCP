@@ -59,7 +59,14 @@ describe("searchLegalContent", () => {
           JSON.stringify({
             LawSearch: {
               totalCnt: "1",
-              law: [{ 법령일련번호: "276787", 법령명한글: "방위사업법", 현행연혁코드: "현행" }],
+              law: [
+                {
+                  법령일련번호: "276787",
+                  법령명한글: "방위사업법",
+                  현행연혁코드: "현행",
+                  시행일자: "20260701",
+                },
+              ],
             },
           }),
         )
@@ -110,9 +117,19 @@ describe("searchLegalContent", () => {
         const query = url.searchParams.get("query") ?? ""
         const item =
           page === 1
-            ? { 법령일련번호: "meta", 법령명한글: "시험평가 일반규정", 현행연혁코드: "현행" }
+            ? {
+                법령일련번호: "meta",
+                법령명한글: "시험평가 일반규정",
+                현행연혁코드: "현행",
+                시행일자: "20200101",
+              }
             : query.includes("야전운용시험")
-              ? { 법령일련번호: "body", 법령명한글: "국방전력발전업무훈령", 현행연혁코드: "현행" }
+              ? {
+                  법령일련번호: "body",
+                  법령명한글: "국방전력발전업무훈령",
+                  현행연혁코드: "현행",
+                  시행일자: "20200101",
+                }
               : undefined
         response.end(
           JSON.stringify({
@@ -185,6 +202,7 @@ describe("searchLegalContent", () => {
                 법령일련번호: String(index + 1),
                 법령명한글: `후보 ${index + 1}`,
                 현행연혁코드: "현행",
+                시행일자: "20200101",
               })),
             },
           }),
@@ -224,12 +242,8 @@ describe("searchLegalContent", () => {
 
     // Then
     expect(searches).toEqual([
+      { query: "방위사업법", page: 1, searchMode: null },
       { query: "야전운용시험", page: 1, searchMode: "2" },
-      {
-        query: "방위사업청",
-        page: 1,
-        searchMode: "2",
-      },
     ])
     expect(detailRequestCount).toBe(3)
     expect(result.results).toHaveLength(3)
@@ -253,6 +267,7 @@ describe("searchLegalContent", () => {
                 법령명한글: `후보 ${index + 1}`,
                 소관부처명: index === 3 ? "방위사업청" : "기타",
                 현행연혁코드: "현행",
+                시행일자: "20200101",
               })),
             },
           }),

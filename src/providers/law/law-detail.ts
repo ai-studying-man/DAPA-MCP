@@ -85,7 +85,7 @@ export function parseLawDetailDocument(
     title,
     content: JSON.stringify(detail.data),
     ...(effectiveDate === undefined ? {} : { effectiveDate }),
-    status: config.sourceType === "law" ? "current" : "unknown",
+    status: "unknown",
     verified: true,
     sourceUrl: "https://www.law.go.kr",
     retrievedAt,

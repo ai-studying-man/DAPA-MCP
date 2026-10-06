@@ -374,12 +374,12 @@ describe("LawProvider", () => {
     ])
   })
 
-  it("passes a specific effective-date range to the historical law search target", async () => {
+  it("searches versions effective on or before an explicit reference date", async () => {
     // Given
     const api = await startFakeLawApi((request, response) => {
       const url = new URL(request.url ?? "/", "http://localhost")
       expect(url.searchParams.get("target")).toBe("eflaw")
-      expect(url.searchParams.get("efYd")).toBe("20210101~20210101")
+      expect(url.searchParams.get("efYd")).toBe("00010101~20210101")
       response.setHeader("content-type", "application/json")
       response.end(
         JSON.stringify({

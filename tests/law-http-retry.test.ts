@@ -33,7 +33,11 @@ describe("LawHttpClient usable-response retry", () => {
     const provider = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 1 })
 
     // When
-    const result = await provider.getDetail({ documentId: "276787", sourceType: "law" })
+    const result = await provider.getDetail({
+      documentId: "276787",
+      sourceType: "law",
+      currentOnly: false,
+    })
 
     // Then
     expect(result.status).toBe("OK")

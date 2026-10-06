@@ -32,6 +32,8 @@ export type LegalDetailInput = {
   readonly documentId: string
   readonly sourceType: SourceType
   readonly forceRefresh?: boolean
+  readonly currentOnly?: boolean
+  readonly asOfDate?: string
   readonly deadlineAt?: number
 }
 

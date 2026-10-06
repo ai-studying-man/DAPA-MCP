@@ -51,11 +51,27 @@ describe("LawApiProvider", () => {
     // Given
     const requests: URL[] = []
     const api = await startFakeLawApi((request, response) => {
-      requests.push(new URL(request.url ?? "/", "http://localhost"))
+      const url = new URL(request.url ?? "/", "http://localhost")
+      requests.push(url)
       response.setHeader("content-type", "application/json")
       response.end(
         JSON.stringify({
-          LawSearch: { totalCnt: "1", law: { 법령일련번호: "1", 법령명한글: "방위사업법" } },
+          ...(url.searchParams.get("target") === "admrul"
+            ? {
+                AdmRulSearch: {
+                  totalCnt: "1",
+                  admrul: {
+                    행정규칙일련번호: url.searchParams.get("nw"),
+                    행정규칙명: "방위사업관리규정",
+                  },
+                },
+              }
+            : {
+                LawSearch: {
+                  totalCnt: "1",
+                  law: { 법령일련번호: "1", 법령명한글: "방위사업법", 시행일자: "20190101" },
+                },
+              }),
         }),
       )
     })
@@ -77,9 +93,9 @@ describe("LawApiProvider", () => {
 
     // Then
     expect(requests[0]?.searchParams.get("target")).toBe("eflaw")
-    expect(requests[0]?.searchParams.get("efYd")).toBe("20200102~20200102")
+    expect(requests[0]?.searchParams.get("efYd")).toBe("00010101~20200102")
     expect(historical.temporalScope).toBe("as_of")
-    expect(requests[1]?.searchParams.get("nw")).toBe("2")
+    expect(requests.slice(1).map((url) => url.searchParams.get("nw"))).toEqual(["1", "2"])
     expect(rules.temporalScope).toBe("all")
   })
 
@@ -185,6 +201,8 @@ describe("LawApiProvider", () => {
           LawSearch: {
             totalCnt: "1",
             law: {
+              법령일련번호: "276787",
+              법령명한글: "방위사업법",
               법령상세링크: "/DRF/lawService.do?%4F%43=secret-value&target=eflaw&MST=276787",
             },
           },
@@ -255,7 +273,11 @@ describe("LawApiProvider", () => {
     const provider = new LawApiProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
 
     // When
-    const result = await provider.query({ apiId: "law.detail", documentId: "281867" })
+    const result = await provider.query({
+      apiId: "law.detail",
+      documentId: "281867",
+      currentOnly: false,
+    })
 
     // Then
     expect(result.status).toBe("OK")

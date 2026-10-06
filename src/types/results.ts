@@ -115,4 +115,22 @@ export type SearchResponse = {
     readonly message: string
   }[]
   readonly detail?: LegalDocumentDetail
+  readonly coverage?: {
+    readonly pages: readonly SearchPageCoverage[]
+    readonly resultLimitReached: boolean
+  }
+}
+
+export type ListPageCoverage = {
+  readonly page: number
+  readonly pageSize: number
+  readonly totalCount: number
+  readonly fetchedCount: number
+  readonly hasMore: boolean
+  readonly nextPage?: number
+}
+
+export type SearchPageCoverage = ListPageCoverage & {
+  readonly sourceType: SourceType
+  readonly query?: string
 }

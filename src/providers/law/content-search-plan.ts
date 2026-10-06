@@ -1,5 +1,6 @@
 import { normalizeSearchText } from "../../lib/normalization/text.js"
 import type { DapaSearchResult, SourceType } from "../../types/results.js"
+import { defensePriority, defenseTitleScore } from "./defense-priority.js"
 
 export const LEGAL_CONTENT_SEARCH_MODES = ["fast", "thorough"] as const
 export type LegalContentSearchMode = (typeof LEGAL_CONTENT_SEARCH_MODES)[number]
@@ -52,6 +53,7 @@ const QUESTION_WORDS = new Set([
   "알려주세요",
   "설명해줘",
   "설명해주세요",
+  "적용되",
 ])
 const LEGAL_DOCUMENT_TERM = /(법|법령|시행령|시행규칙|규정)$/u
 
@@ -86,15 +88,20 @@ export function planContentSearch(query: string): ContentQueryPlan {
   const contextTerms = coreTerms
     .filter(isDocumentContext)
     .sort((left, right) => contextScore(right) - contextScore(left))
-  const ordered = [issueTerms[0], contextTerms[0], collapsed, compact, ...coreTerms]
+  const documentTerms = contextTerms.filter(isDocumentTitleQuery)
+  const contextualIssue = contextTerms.length > 0 && issueTerms.length > 0
+  const ordered = [
+    issueTerms[0],
+    documentTerms[0],
+    ...(contextualIssue ? issueTerms.slice(1) : [collapsed, compact, ...issueTerms.slice(1)]),
+    ...(issueTerms.length === 0 ? contextTerms : []),
+  ]
   const searchQueries = [...new Set(ordered)].filter(
     (value): value is string => value !== undefined && value.length > 0,
   )
   return {
     searchQueries,
-    evidenceQueries: [...new Set([issueTerms[0], ...contextTerms, ...issueTerms.slice(1)])].filter(
-      (value): value is string => value !== undefined,
-    ),
+    evidenceQueries: [...new Set(issueTerms.length > 0 ? issueTerms : documentTerms)],
   }
 }
 
@@ -107,7 +114,7 @@ export function isDocumentTitleQuery(value: string): boolean {
 }
 
 function isDocumentContext(value: string): boolean {
-  return isDocumentTitleQuery(value) || value.startsWith("방위사업청") || value === "국방부"
+  return isDocumentTitleQuery(value) || /^(방위사업청|방사청)/u.test(value) || value === "국방부"
 }
 
 function contextScore(value: string): number {
@@ -122,9 +129,13 @@ export function rankCandidates(
     .map((document, index) => ({
       document,
       index,
-      score: dapaRelevanceScore(document) + titleRelevanceScore(document.title, queries),
+      defense: defensePriority(document),
+      score: titleRelevanceScore(document.title, queries) + defenseTitleScore(document.title),
     }))
-    .sort((left, right) => right.score - left.score || left.index - right.index)
+    .sort(
+      (left, right) =>
+        right.defense - left.defense || right.score - left.score || left.index - right.index,
+    )
     .map(({ document }) => document)
 }
 
@@ -140,18 +151,6 @@ export function titleRelevanceScore(title: string, queries: readonly string[]): 
     }
     return score
   }, 0)
-}
-
-function dapaRelevanceScore(document: DapaSearchResult): number {
-  const title = normalizeSearchText(document.title)
-  const organization = normalizeSearchText(document.organization ?? "")
-  const organizationScore = organization.includes("방위사업청")
-    ? 30
-    : organization.includes("국방부")
-      ? 10
-      : 0
-  const titleScore = title.includes("방위사업") || title.includes("국방전력") ? 20 : 0
-  return organizationScore + titleScore
 }
 
 function stripKoreanParticle(value: string): string {

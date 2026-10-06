@@ -1,18 +1,25 @@
 import { z } from "zod"
 import { DapaError } from "../../lib/errors/dapa-error.js"
-import type { DapaSearchResult, DocumentStatus } from "../../types/results.js"
+import type { DapaSearchResult } from "../../types/results.js"
 import { removeOcSearchParams, sanitizeUrlString } from "./law-api-sanitize.js"
+import { effectiveStatus } from "./law-temporal-data.js"
 import type { LawTargetConfig } from "./target-config.js"
 
 const SearchEnvelopeSchema = z.record(z.string(), z.unknown())
 const SearchBodySchema = z
-  .object({ totalCnt: z.coerce.number().int().nonnegative() })
+  .object({
+    totalCnt: z.coerce.number().int().nonnegative(),
+    upstreamFetchedCount: z.coerce.number().int().nonnegative().optional(),
+    upstreamTotalCounts: z.array(z.coerce.number().int().nonnegative()).optional(),
+  })
   .catchall(z.unknown())
 const ItemSchema = z.record(z.string(), z.unknown())
 
 export type ParsedSearchResponse = {
   readonly totalCount: number
   readonly results: readonly DapaSearchResult[]
+  readonly fetchedCount: number
+  readonly totalCounts: readonly number[]
 }
 
 export function parseLawSearchResponse(
@@ -43,13 +50,18 @@ export function parseLawSearchResponse(
 
   const rawItems = toItems(body.data[config.itemKey])
   const results = rawItems.map((item) => toSearchResult(item, config, retrievedAt))
-  if (body.data.totalCnt > 0 && results.length === 0) {
+  if (body.data.totalCnt > 0 && results.length === 0 && body.data["returnedCount"] !== 0) {
     throw new DapaError(
       "SOURCE_UNAVAILABLE",
       "법제처 API가 건수만 반환하고 결과 항목을 누락했습니다",
     )
   }
-  return { totalCount: body.data.totalCnt, results }
+  return {
+    totalCount: body.data.totalCnt,
+    results,
+    fetchedCount: body.data.upstreamFetchedCount ?? rawItems.length,
+    totalCounts: body.data.upstreamTotalCounts ?? [body.data.totalCnt],
+  }
 }
 
 function toItems(value: unknown): readonly Record<string, unknown>[] {
@@ -73,7 +85,7 @@ function toSearchResult(
   const reference = firstString(item, config.referenceKeys)
   const date = formatDate(firstString(item, config.dateKeys))
   const effectiveDate = formatDate(firstString(item, config.effectiveDateKeys))
-  const status = toStatus(item["현행연혁코드"])
+  const status = effectiveStatus(item)
   return {
     id,
     source: "국가법령정보 공동활용 Open API",
@@ -119,11 +131,4 @@ function toSourceUrl(value: string | undefined): string | undefined {
     if (error instanceof TypeError) return sanitizeUrlString(absolute)
     throw error
   }
-}
-
-function toStatus(value: unknown): DocumentStatus {
-  if (value === "현행") return "current"
-  if (value === "연혁") return "historical"
-  if (value === "폐지") return "repealed"
-  return "unknown"
 }

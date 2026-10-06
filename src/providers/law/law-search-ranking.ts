@@ -1,5 +1,6 @@
 import { normalizeSearchText } from "../../lib/normalization/text.js"
 import type { DapaSearchResult } from "../../types/results.js"
+import { defensePriority } from "./defense-priority.js"
 
 export function rankSearchResults(
   results: readonly DapaSearchResult[],
@@ -14,9 +15,13 @@ export function rankSearchResults(
     .map((result, index) => ({
       result,
       index,
+      defense: defensePriority(result),
       score: titleScore(normalizeSearchText(result.title), normalizedQuery, queryTokens),
     }))
-    .sort((left, right) => right.score - left.score || left.index - right.index)
+    .sort(
+      (left, right) =>
+        right.defense - left.defense || right.score - left.score || left.index - right.index,
+    )
     .map(({ result }) => result)
 }
 

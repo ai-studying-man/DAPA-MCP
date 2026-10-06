@@ -2,6 +2,18 @@ import { describe, expect, it } from "vitest"
 import { stringifyBoundedToolResponse } from "../src/tools/law-api-tool-response.js"
 
 describe("law API MCP response formatting", () => {
+  it("keeps failures and a follow-up action outside a truncated preview", () => {
+    // Given
+    const response = {
+      status: "PARTIAL_RESULT",
+      errors: [{ code: "TIMEOUT", message: "upstream" }],
+      data: "x".repeat(5000),
+    }
+    // When
+    const parsed = JSON.parse(stringifyBoundedToolResponse(response, 1000))
+    // Then
+    expect(parsed).toMatchObject({ errors: [{ code: "TIMEOUT" }], nextAction: "narrow_or_page" })
+  })
   it("returns valid bounded JSON when a response exceeds the MCP output limit", () => {
     // Given
     const response = {

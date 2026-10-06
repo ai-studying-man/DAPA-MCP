@@ -1,23 +1,21 @@
 import { TtlCache } from "../../lib/cache/ttl-cache.js"
 import { DapaError } from "../../lib/errors/dapa-error.js"
-import type { ResponseStatus } from "../../types/results.js"
+import type { ListPageCoverage, ResponseStatus } from "../../types/results.js"
 import {
   type LawApiBodyInput,
   LawApiBodyResolver,
   type LawApiBodyResponse,
 } from "./law-api-body.js"
-import {
-  getLawApiConfig,
-  type LawApiConfig,
-  type LawApiId,
-  type LawApiInputName,
-} from "./law-api-catalog.js"
+import { getLawApiConfig, type LawApiConfig, type LawApiId } from "./law-api-catalog.js"
 import { extractLawApiBodyReferences, type LawApiBodyReference } from "./law-api-references.js"
+import { apiQueryCacheKey, buildSearchParams, inputValue } from "./law-api-request.js"
 import { parseLawApiResponse } from "./law-api-response.js"
 import { sanitizeUrlString } from "./law-api-sanitize.js"
-import { type TemporalRequest, temporalRequest, temporalScopeFor } from "./law-api-temporal.js"
+import { temporalRequest, temporalScopeFor } from "./law-api-temporal.js"
 import { LawHttpClient } from "./law-http.js"
+import { extractListCoverage } from "./law-list-coverage.js"
 import type { LawProviderConfig, ProviderHealth } from "./law-provider.js"
+import { LawTemporalAccess } from "./law-temporal-access.js"
 
 export type LawApiQueryInput = {
   readonly apiId: LawApiId
@@ -47,12 +45,14 @@ export type LawApiQueryResponse = {
   readonly data: Readonly<Record<string, unknown>>
   readonly bodyReferences: readonly LawApiBodyReference[]
   readonly errors: readonly { readonly code: string; readonly message: string }[]
+  readonly coverage?: ListPageCoverage
 }
 
 export class LawApiProvider {
   private readonly http: LawHttpClient
   private readonly bodyResolver: LawApiBodyResolver
   private readonly cache: TtlCache<LawApiQueryResponse>
+  private readonly temporal: LawTemporalAccess
 
   constructor(private readonly config: LawProviderConfig) {
     const baseUrl = config.baseUrl ?? "https://www.law.go.kr/DRF"
@@ -67,7 +67,12 @@ export class LawApiProvider {
       ...(config.referer === undefined ? {} : { referer: config.referer }),
       ...(config.userAgent === undefined ? {} : { userAgent: config.userAgent }),
     })
-    this.cache = new TtlCache(config.cacheTtlMs ?? 300_000)
+    this.cache = new TtlCache(Math.min(config.cacheTtlMs ?? 300_000, 300_000))
+    this.temporal = new LawTemporalAccess(
+      this.http,
+      config.cacheTtlMs ?? 300_000,
+      config.detailCacheTtlMs ?? 21_600_000,
+    )
     const siteBaseUrl = new URL(`${new URL(baseUrl).origin}/`)
     this.bodyResolver = new LawApiBodyResolver(this.http, siteBaseUrl, (input) => this.query(input))
   }
@@ -123,11 +128,18 @@ export class LawApiProvider {
     }
 
     try {
-      const text = await this.http.get(
-        api.endpoint,
-        buildSearchParams(api, input, this.config.apiKey ?? "", temporal),
-      )
+      const params = buildSearchParams(api, input, this.config.apiKey ?? "")
+      const isStatute = api.categoryId === "law" || api.categoryId === "administrative_rule"
+      const text = isStatute
+        ? api.operation === "list"
+          ? await this.temporal.search(params, input)
+          : (await this.temporal.detail(params, input)).text
+        : await this.http.get(api.endpoint, params)
       const { data, status } = parseLawApiResponse(text, api)
+      const coverage =
+        api.paginated === true
+          ? extractListCoverage(data, input.page ?? 1, Math.min(input.limit ?? 20, 100))
+          : undefined
       const response: LawApiQueryResponse = {
         status,
         apiId: api.id,
@@ -140,6 +152,7 @@ export class LawApiProvider {
         data,
         bodyReferences: extractLawApiBodyReferences(api, data),
         errors: [],
+        ...(coverage === undefined ? {} : { coverage }),
       }
       if (response.status === "OK") this.cache.set(key, response)
       return response
@@ -157,67 +170,6 @@ export class LawApiProvider {
 
   async resolveBody(input: LawApiBodyInput): Promise<LawApiBodyResponse> {
     return this.bodyResolver.resolve(input)
-  }
-}
-
-function buildSearchParams(
-  api: LawApiConfig,
-  input: LawApiQueryInput,
-  apiKey: string,
-  temporal: TemporalRequest,
-): Readonly<Record<string, string>> {
-  const params: Record<string, string> = {
-    OC: apiKey,
-    target: temporal.target,
-    type: "JSON",
-    ...api.staticParameters,
-    ...temporal.parameters,
-  }
-  addInput(params, api.inputParameters?.query, input.query)
-  addInput(params, api.inputParameters?.documentId, input.documentId)
-  addInput(params, api.inputParameters?.customCode, input.customCode)
-  addInput(params, api.inputParameters?.articleNumber, input.articleNumber)
-  if (api.paginated === true) {
-    params["display"] = String(Math.min(input.limit ?? 20, 100))
-    params["page"] = String(input.page ?? 1)
-  }
-  return params
-}
-
-function apiQueryCacheKey(input: LawApiQueryInput): string {
-  return JSON.stringify([
-    input.apiId,
-    input.query ?? "",
-    input.documentId ?? "",
-    input.customCode ?? "",
-    input.articleNumber ?? "",
-    input.limit ?? "",
-    input.page ?? "",
-    input.currentOnly ?? true,
-    input.asOfDate ?? "",
-  ])
-}
-
-function addInput(
-  params: Record<string, string>,
-  parameter: string | undefined,
-  value: string | undefined,
-): void {
-  if (parameter !== undefined && value !== undefined) params[parameter] = value
-}
-
-function inputValue(input: LawApiQueryInput, name: LawApiInputName): string | undefined {
-  switch (name) {
-    case "query":
-      return input.query
-    case "documentId":
-      return input.documentId
-    case "customCode":
-      return input.customCode
-    case "articleNumber":
-      return input.articleNumber
-    default:
-      return assertNever(name)
   }
 }
 
@@ -251,8 +203,4 @@ function toErrorShape(error: Error): { readonly code: string; readonly message: 
     return { code: error.code, message: sanitizeUrlString(error.message) }
   }
   return { code: "INTERNAL_ERROR", message: sanitizeUrlString(error.message) }
-}
-
-function assertNever(value: never): never {
-  throw new DapaError("INTERNAL_ERROR", `처리할 수 없는 입력 형식: ${String(value)}`)
 }

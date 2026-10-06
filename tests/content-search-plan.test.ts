@@ -69,7 +69,7 @@ describe("expandSearchQueries", () => {
     expect(queries[0]).toBe(expected)
   })
 
-  it("keeps DAPA as secondary evidence for constitutional-case questions", () => {
+  it("uses agency context for discovery but not as substantive evidence", () => {
     // Given
     const question = "방위사업청 물품적격심사기준 부칙 위헌"
 
@@ -77,7 +77,69 @@ describe("expandSearchQueries", () => {
     const plan = planContentSearch(question)
 
     // Then
-    expect(plan.evidenceQueries.slice(0, 2)).toEqual(["물품적격심사기준", "방위사업청"])
+    expect(plan.evidenceQueries).toEqual(["물품적격심사기준", "부칙", "위헌"])
+    expect(plan.searchQueries.slice(0, 2)).toEqual(["물품적격심사기준", "부칙"])
+  })
+
+  it.each(["방위사업청", "방사청"])("excludes %s from contract evidence", (agency) => {
+    // Given
+    const question = `${agency}에서 중도확정계약을 알려줘`
+    // When
+    const plan = planContentSearch(question)
+    // Then
+    expect(plan.evidenceQueries).toEqual(["중도확정계약"])
+    expect(plan.searchQueries.slice(0, 2)).not.toContain(agency)
+  })
+
+  it("keeps an explicit document title discoverable without treating it as issue evidence", () => {
+    // Given
+    const question = "방위사업관리규정 예산편성"
+    // When
+    const plan = planContentSearch(question)
+    // Then
+    expect(plan.searchQueries.slice(0, 2)).toEqual(["예산편성", "방위사업관리규정"])
+    expect(plan.evidenceQueries).toEqual(["예산편성"])
+  })
+
+  it("retains a document-only query without inventing a substantive issue", () => {
+    // Given
+    const question = "방위사업법"
+    // When
+    const plan = planContentSearch(question)
+    // Then
+    expect(plan.searchQueries[0]).toBe(question)
+    expect(plan.evidenceQueries).toEqual([question])
+  })
+
+  it("prioritizes defense candidates before unrelated exact issue titles without excluding them", () => {
+    // Given
+    const candidate = (
+      documentId: string,
+      title: string,
+      organization?: string,
+    ): DapaSearchResult => ({
+      id: documentId,
+      documentId,
+      title,
+      source: "official",
+      sourceType: "administrative_rule",
+      ...(organization === undefined ? {} : { organization }),
+      status: "unknown",
+      verified: true,
+      retrievedAt: "2026-10-06T00:00:00.000Z",
+    })
+    // When
+    const ranked = rankCandidates(
+      [
+        candidate("other", "시험평가", "타기관"),
+        candidate("mod", "시험평가 기준", "국방부"),
+        candidate("title", "국방전력발전업무훈령"),
+        candidate("dapa", "획득업무 지침", "방위사업청"),
+      ],
+      ["시험평가"],
+    )
+    // Then
+    expect(ranked.map(({ documentId }) => documentId)).toEqual(["title", "dapa", "mod", "other"])
   })
 
   it("adds document-title relevance to DAPA organization relevance", () => {

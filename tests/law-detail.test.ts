@@ -9,7 +9,7 @@ afterEach(async () => {
 })
 
 describe("LawProvider.getDetail", () => {
-  it("retrieves official detail by document ID", async () => {
+  it("retrieves an explicitly requested official version by document ID", async () => {
     // Given
     const api = await startFakeLawApi((request, response) => {
       const url = new URL(request.url ?? "/", "http://localhost")
@@ -35,7 +35,11 @@ describe("LawProvider.getDetail", () => {
     const provider = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
 
     // When
-    const result = await provider.getDetail({ documentId: "276787", sourceType: "law" })
+    const result = await provider.getDetail({
+      documentId: "276787",
+      sourceType: "law",
+      currentOnly: false,
+    })
 
     // Then
     expect(result.status).toBe("OK")
@@ -112,6 +116,7 @@ describe("LawProvider.getDetail", () => {
     const result = await provider.getDetail({
       documentId: "38163",
       sourceType: "administrative_rule",
+      currentOnly: false,
     })
 
     // Then
@@ -150,6 +155,7 @@ describe("LawProvider.getDetail", () => {
     const result = await provider.getDetail({
       documentId: "2100000284174",
       sourceType: "administrative_rule",
+      currentOnly: false,
     })
 
     // Then
@@ -183,8 +189,12 @@ describe("LawProvider.getDetail", () => {
     const provider = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
 
     // When
-    await provider.getDetail({ documentId: "276787", sourceType: "law" })
-    const result = await provider.getDetail({ documentId: "276787", sourceType: "law" })
+    await provider.getDetail({ documentId: "276787", sourceType: "law", currentOnly: false })
+    const result = await provider.getDetail({
+      documentId: "276787",
+      sourceType: "law",
+      currentOnly: false,
+    })
 
     // Then
     expect(result.status).toBe("OK")
@@ -211,8 +221,8 @@ describe("LawProvider.getDetail", () => {
 
     // When
     const results = await Promise.all([
-      provider.getDetail({ documentId: "276787", sourceType: "law" }),
-      provider.getDetail({ documentId: "276787", sourceType: "law" }),
+      provider.getDetail({ documentId: "276787", sourceType: "law", currentOnly: false }),
+      provider.getDetail({ documentId: "276787", sourceType: "law", currentOnly: false }),
     ])
 
     // Then

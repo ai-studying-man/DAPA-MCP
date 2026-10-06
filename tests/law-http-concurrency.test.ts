@@ -37,13 +37,14 @@ describe("Law HTTP concurrency", () => {
       retryLimit: 0,
       maxConcurrency: 1,
     })
-    const first = law.getDetail({ documentId: "first", sourceType: "law" })
+    const first = law.getDetail({ documentId: "first", sourceType: "law", currentOnly: false })
     await started
 
     // When
     const queued = await law.getDetail({
       documentId: "queued",
       sourceType: "law",
+      currentOnly: false,
       deadlineAt: Date.now() + 20,
     })
 
@@ -90,12 +91,16 @@ describe("Law HTTP concurrency", () => {
       maxConcurrency: 1,
       maxQueue: 1,
     })
-    const first = law.getDetail({ documentId: "first", sourceType: "law" })
+    const first = law.getDetail({ documentId: "first", sourceType: "law", currentOnly: false })
     await started
-    const second = law.getDetail({ documentId: "second", sourceType: "law" })
+    const second = law.getDetail({ documentId: "second", sourceType: "law", currentOnly: false })
 
     // When
-    const excess = await law.getDetail({ documentId: "excess", sourceType: "law" })
+    const excess = await law.getDetail({
+      documentId: "excess",
+      sourceType: "law",
+      currentOnly: false,
+    })
 
     // Then
     expect(excess.status).toBe("SOURCE_UNAVAILABLE")
@@ -166,7 +171,7 @@ describe("Law HTTP concurrency", () => {
     })
     openApis.push(api)
     const law = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
-    const first = law.getDetail({ documentId: "1", sourceType: "law" })
+    const first = law.getDetail({ documentId: "1", sourceType: "law", currentOnly: false })
     await started
 
     // When
@@ -174,6 +179,7 @@ describe("Law HTTP concurrency", () => {
     const second = await law.getDetail({
       documentId: "1",
       sourceType: "law",
+      currentOnly: false,
       deadlineAt: Date.now() + 20,
     })
 
@@ -224,6 +230,7 @@ describe("Law HTTP concurrency", () => {
         (index % 2 === 0 ? firstProvider : secondProvider).getDetail({
           documentId: String(index),
           sourceType: "law",
+          currentOnly: false,
         }),
       ),
     )

@@ -82,6 +82,13 @@ function isEmptyApiResponse(api: LawApiConfig, data: Readonly<Record<string, unk
   }
   if (hasNoResultMessage(data)) return true
   if (api.operation === "list") {
+    if (
+      Object.values(data).some((value) => {
+        const root = ApiResponseSchema.safeParse(value)
+        return root.success && root.data["returnedCount"] === 0
+      })
+    )
+      return true
     if (findTotalCount(data) === 0) return true
     if (!hasDetailContent(data)) {
       throw new DapaError("SOURCE_UNAVAILABLE", "법제처 API 목록 응답에 결과 항목이 없습니다")
