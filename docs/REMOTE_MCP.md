@@ -35,6 +35,20 @@ Vercel의 New Project에서 GitHub `ai-studying-man/DAPA-MCP`의 `main`을 선�
 저장소의 `vercel.json`이 MCP 함수에 `DAPA_info`를 포함하고, 최대 실행시간 60초와 다음 경로를
 설정한다.
 
+법령 API와의 해외 왕복을 줄이기 위해 실행 지역은 서울(`icn1`) 한 곳으로 지정한다.
+이 설정은 다음 배포부터 적용된다. 변경 전후 동일 질문의 첫 호출과 반복 호출을 별도로 비교한다.
+로컬 측정값은 Vercel 실행 시간이나 ChatGPT의 답변 생성 시간을 보장하지 않는다.
+
+현행 목록·버전 매핑·현행 응답 캐시는 최대 5분이며, 한국시간 날짜가 바뀌면 다시 확인한다.
+공식 버전 ID와 시행일이 같은 원문은 별도 본문 캐시로 재사용한다(기본 6시간).
+`forceRefresh=true`로 목록·본문을 새로 조회할 수 있다. 메모리 캐시는 서버 인스턴스별이며
+콜드 스타트나 다른 인스턴스로의 요청에서는 재사용되지 않을 수 있다.
+
+본문 검색의 `coverage`는 조회한 후보·페이지·남은 범위를, `evidenceCoverage`는 생략된
+조문·본문 발췌 여부를 나타낸다. `totalCount`는 공식 목록의 총건수이지 질문에 맞는 현행
+근거의 개수가 아니다. 빠른 검색은 주요 문서를 우선 확인하며 전체 조회를 뜻하지 않는다.
+필요하면 `mode=thorough`, 다음 페이지 또는 `get_legal_detail`로 추가 확인한다.
+
 - 직원 등록용: `https://<project>.vercel.app/law`
 - 표준 별칭: `https://<project>.vercel.app/mcp`
 - 원본 함수: `https://<project>.vercel.app/api/mcp`
