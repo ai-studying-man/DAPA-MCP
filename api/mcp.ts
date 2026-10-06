@@ -1,6 +1,7 @@
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js"
+import { withLawPerformance } from "../src/providers/law/law-performance.js"
 import {
   createDapaServer,
   type DapaServerDependencies,
@@ -36,7 +37,7 @@ export function createMcpHttpHandler(options: HandlerOptions): McpHttpHandler {
   })
   let dependencies: Promise<DapaServerDependencies> | undefined
 
-  return async (request) => {
+  const handleRequest: McpHttpHandler = async (request) => {
     try {
       if (request.method === "OPTIONS") {
         return withCors(new Response(null, { status: 204 }))
@@ -69,6 +70,11 @@ export function createMcpHttpHandler(options: HandlerOptions): McpHttpHandler {
       return withCors(jsonRpcError(500, -32603, "Internal server error"))
     }
   }
+  return (request) =>
+    withLawPerformance(
+      options.environment["DAPA_PERFORMANCE_LOG"] !== "0" && request.method === "POST",
+      () => handleRequest(request),
+    )
 }
 
 async function parseBody(request: Request, maxBytes: number): Promise<ParsedBodyResult> {

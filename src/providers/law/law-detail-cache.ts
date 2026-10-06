@@ -1,5 +1,6 @@
 import { TtlCache } from "../../lib/cache/ttl-cache.js"
 import type { SearchResponse } from "../../types/results.js"
+import { recordLawCache } from "./law-performance.js"
 
 export class LawDetailCache {
   private readonly cached: TtlCache<SearchResponse>
@@ -16,10 +17,18 @@ export class LawDetailCache {
   ): Promise<SearchResponse> {
     if (!forceRefresh) {
       const cached = this.cached.get(key)
-      if (cached !== undefined) return Promise.resolve(cached)
+      if (cached !== undefined) {
+        recordLawCache("detail", "hit")
+        return Promise.resolve(cached)
+      }
     }
     const pending = this.pending.get(key)
-    if (pending !== undefined) return pending
+    if (pending !== undefined) {
+      recordLawCache("detail", "shared")
+      return pending
+    }
+
+    recordLawCache("detail", "miss")
 
     const request = loader().then((response) => {
       if (response.status === "OK") this.cached.set(key, response)

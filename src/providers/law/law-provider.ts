@@ -1,10 +1,11 @@
 import { DapaError } from "../../lib/errors/dapa-error.js"
 import type { DapaSearchResult, LegalHistoryResponse, SearchResponse } from "../../types/results.js"
-import { sanitizeUrlString } from "./law-api-sanitize.js"
 import { parseLawDetailDocument } from "./law-detail.js"
 import { LawDetailCache } from "./law-detail-cache.js"
 import { fetchLawHistory } from "./law-history-provider.js"
 import { LawHttpClient } from "./law-http.js"
+import { measureLawParse } from "./law-performance.js"
+import { toErrorShape, unavailable, waitForDeadline } from "./law-provider-response.js"
 import type {
   LawProviderConfig,
   LegalDetailInput,
@@ -127,7 +128,10 @@ export class LawProvider {
             org: "1690000",
             nw,
           })
-          const parsed = parseLawSearchResponse(text, target, new Date().toISOString())
+          const parsed = measureLawParse(
+            () => parseLawSearchResponse(text, target, new Date().toISOString()),
+            "list",
+          )
           collected.push(...parsed.results)
           categoryCount += parsed.results.length
           if (categoryCount >= parsed.totalCount || parsed.results.length < pageSize) break
@@ -171,11 +175,8 @@ export class LawProvider {
             },
             _input.deadlineAt,
           )
-          const parsed = parseLawDetailDocument(
-            text,
-            _input.documentId,
-            target,
-            new Date().toISOString(),
+          const parsed = measureLawParse(() =>
+            parseLawDetailDocument(text, _input.documentId, target, new Date().toISOString()),
           )
           return { status: "OK", results: [parsed.result], detail: parsed.detail, errors: [] }
         } catch (error) {
@@ -190,6 +191,7 @@ export class LawProvider {
     try {
       return await waitForDeadline(request, _input.deadlineAt)
     } catch (error) {
+      if (!(error instanceof Error)) return unavailable("INTERNAL_ERROR", "알 수 없는 내부 오류")
       const shape = toErrorShape(error)
       return unavailable(shape.code, shape.message)
     }
@@ -203,16 +205,20 @@ export class LawProvider {
       target.sourceType === "law" && (input.currentOnly === false || input.asOfDate !== undefined)
         ? { ...target, target: "eflaw" }
         : target
-    const key = [
+    const display = Math.min(
+      input.organization === undefined ? Math.max(input.limit ?? 10, 20) : 100,
+      100,
+    )
+    const key = JSON.stringify([
       resolvedTarget.target,
       input.query,
-      input.limit ?? 10,
+      display,
       input.currentOnly ?? true,
       input.organization ?? "",
       input.asOfDate ?? "",
       input.searchScope ?? "title",
       input.page ?? 1,
-    ].join(":")
+    ])
     const request = this.cache.getOrLoad(key, input.forceRefresh === true, async () => {
       const text = await this.http.get(
         "lawSearch.do",
@@ -221,9 +227,7 @@ export class LawProvider {
           target: resolvedTarget.target,
           type: "JSON",
           query: input.query,
-          display: String(
-            Math.min(input.organization === undefined ? Math.max(input.limit ?? 10, 20) : 100, 100),
-          ),
+          display: String(display),
           page: String(input.page ?? 1),
           ...(input.searchScope === "content" ? { search: "2" } : {}),
           ...(input.asOfDate === undefined
@@ -234,7 +238,10 @@ export class LawProvider {
         },
         input.deadlineAt,
       )
-      const parsed = parseLawSearchResponse(text, resolvedTarget, new Date().toISOString())
+      const parsed = measureLawParse(
+        () => parseLawSearchResponse(text, resolvedTarget, new Date().toISOString()),
+        "list",
+      )
       return input.currentOnly === false || input.asOfDate !== undefined
         ? parsed.results
         : parsed.results.filter(
@@ -243,38 +250,4 @@ export class LawProvider {
     })
     return waitForDeadline(request, input.deadlineAt)
   }
-}
-
-async function waitForDeadline<T>(request: Promise<T>, deadlineAt: number | undefined): Promise<T> {
-  if (deadlineAt === undefined) return request
-  const remaining = deadlineAt - Date.now()
-  if (remaining <= 0) {
-    throw new DapaError("TIMEOUT", "법령 검색의 전체 시간 한도를 초과했습니다")
-  }
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const timeout = new Promise<never>((_resolve, reject) => {
-    timer = setTimeout(
-      () => reject(new DapaError("TIMEOUT", "법령 검색의 전체 시간 한도를 초과했습니다")),
-      remaining,
-    )
-  })
-  try {
-    return await Promise.race([request, timeout])
-  } finally {
-    if (timer !== undefined) clearTimeout(timer)
-  }
-}
-
-function unavailable(code: string, message: string): SearchResponse {
-  return { status: "SOURCE_UNAVAILABLE", results: [], errors: [{ code, message }] }
-}
-
-function toErrorShape(error: unknown): { readonly code: string; readonly message: string } {
-  if (error instanceof DapaError) {
-    return { code: error.code, message: sanitizeUrlString(error.message) }
-  }
-  if (error instanceof Error) {
-    return { code: "INTERNAL_ERROR", message: sanitizeUrlString(error.message) }
-  }
-  return { code: "INTERNAL_ERROR", message: "알 수 없는 내부 오류" }
 }

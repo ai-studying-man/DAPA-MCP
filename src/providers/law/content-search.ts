@@ -153,39 +153,40 @@ function mergeSearchStates(left: SearchState, right: SearchState): SearchState {
 
 async function hydrateDocuments(request: HydrationRequest): Promise<readonly LegalContentHit[]> {
   const outcomes: LegalContentHit[] = []
-  for (let offset = 0; offset < request.documents.length; offset += request.concurrency) {
-    const batch = request.documents.slice(offset, offset + request.concurrency)
-    outcomes.push(
-      ...(await Promise.all(
-        batch.map(async (document) => {
-          const detailInput: LegalDetailInput = {
-            documentId: document.documentId,
-            sourceType: document.sourceType,
-            forceRefresh: request.forceRefresh,
-            deadlineAt: request.deadlineAt,
-          }
-          const detail = await request.law.getDetail(detailInput)
-          const matchingDetail =
-            detail.detail === undefined
-              ? undefined
-              : selectMatchingDetail(detail.detail, request.queries)
-          const excerpts =
-            matchingDetail === undefined
-              ? extractMatchingExcerpts(detail.results[0]?.content, request.queries)
-              : []
-          const hasEvidence = matchingDetail !== undefined || excerpts.length > 0
-          return {
-            document,
-            status: detail.status,
-            match: detail.status === "OK" && hasEvidence ? "content" : "metadata",
-            ...(matchingDetail === undefined ? {} : { detail: matchingDetail }),
-            ...(excerpts.length === 0 ? {} : { excerpts }),
-            errors: detail.errors,
-          } satisfies LegalContentHit
-        }),
-      )),
-    )
-  }
+  let nextIndex = 0
+  await Promise.all(
+    Array.from({ length: Math.min(request.concurrency, request.documents.length) }, async () => {
+      while (nextIndex < request.documents.length) {
+        const index = nextIndex++
+        const document = request.documents[index]
+        if (document === undefined) return
+        const detailInput: LegalDetailInput = {
+          documentId: document.documentId,
+          sourceType: document.sourceType,
+          forceRefresh: request.forceRefresh,
+          deadlineAt: request.deadlineAt,
+        }
+        const detail = await request.law.getDetail(detailInput)
+        const matchingDetail =
+          detail.detail === undefined
+            ? undefined
+            : selectMatchingDetail(detail.detail, request.queries)
+        const excerpts =
+          matchingDetail === undefined
+            ? extractMatchingExcerpts(detail.results[0]?.content, request.queries)
+            : []
+        const hasEvidence = matchingDetail !== undefined || excerpts.length > 0
+        outcomes[index] = {
+          document,
+          status: detail.status,
+          match: detail.status === "OK" && hasEvidence ? "content" : "metadata",
+          ...(matchingDetail === undefined ? {} : { detail: matchingDetail }),
+          ...(excerpts.length === 0 ? {} : { excerpts }),
+          errors: detail.errors,
+        } satisfies LegalContentHit
+      }
+    }),
+  )
   return outcomes
 }
 

@@ -1,5 +1,6 @@
 import ky, { HTTPError, type KyInstance, TimeoutError } from "ky"
 import { DapaError } from "../../lib/errors/dapa-error.js"
+import { recordLawPerformance } from "./law-performance.js"
 import { sharedUpstreamGate, type UpstreamGate } from "./upstream-gate.js"
 
 const DEFAULT_REFERER = "https://www.law.go.kr/"
@@ -87,8 +88,11 @@ export class LawHttpClient {
     responseKind: LawApiResponseKind,
     deadlineAt?: number,
   ): Promise<string> {
+    const queuedAt = performance.now()
     return this.gate.run(
       async () => {
+        const started = performance.now()
+        let success = false
         try {
           for (let attempt = 0; attempt <= this.usableResponseRetryLimit; attempt += 1) {
             const response = await this.client.get(endpoint, {
@@ -98,6 +102,7 @@ export class LawHttpClient {
             const bytes = await readBoundedResponse(response, this.maxTextResponseBytes)
             const text = new TextDecoder().decode(bytes)
             if (isUsableApiResponse(text, response.headers.get("content-type"), responseKind)) {
+              success = true
               return text
             }
           }
@@ -110,6 +115,14 @@ export class LawHttpClient {
             throw new DapaError("SOURCE_UNAVAILABLE", "법제처 API에 연결할 수 없습니다")
           }
           throwLawHttpError(error)
+        } finally {
+          recordLawPerformance({
+            stage: "upstream",
+            operation: endpoint === "lawSearch.do" ? "list" : "body",
+            durationMs: performance.now() - started,
+            queueMs: started - queuedAt,
+            success,
+          })
         }
       },
       deadlineAt === undefined ? {} : { deadlineAt },
@@ -126,11 +139,16 @@ export class LawHttpClient {
   }
 
   async getResource(url: URL): Promise<LawHttpResource> {
+    const queuedAt = performance.now()
     return this.gate.run(async () => {
+      const started = performance.now()
+      let success = false
       try {
         const response = await this.resourceClient.get(url)
+        const bytes = await readBoundedResponse(response, this.maxResourceResponseBytes)
+        success = true
         return {
-          bytes: await readBoundedResponse(response, this.maxResourceResponseBytes),
+          bytes,
           contentType: response.headers.get("content-type") ?? "application/octet-stream",
         }
       } catch (error) {
@@ -138,6 +156,14 @@ export class LawHttpClient {
           throw new DapaError("SOURCE_UNAVAILABLE", "법제처 API에 연결할 수 없습니다")
         }
         throwLawHttpError(error)
+      } finally {
+        recordLawPerformance({
+          stage: "upstream",
+          operation: "resource",
+          durationMs: performance.now() - started,
+          queueMs: started - queuedAt,
+          success,
+        })
       }
     })
   }

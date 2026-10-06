@@ -1,11 +1,15 @@
 import { TtlCache } from "../../lib/cache/ttl-cache.js"
 import type { DapaSearchResult } from "../../types/results.js"
+import { recordLawCache } from "./law-performance.js"
 
 export class LawSearchCache {
-  private readonly cached: TtlCache<readonly DapaSearchResult[]>
+  private readonly cached: TtlCache<{
+    readonly results: readonly DapaSearchResult[]
+    readonly expiresAt: number
+  }>
   private readonly pending = new Map<string, Promise<readonly DapaSearchResult[]>>()
 
-  constructor(ttlMs: number) {
+  constructor(private readonly ttlMs: number) {
     this.cached = new TtlCache(ttlMs)
   }
 
@@ -16,13 +20,23 @@ export class LawSearchCache {
   ): Promise<readonly DapaSearchResult[]> {
     if (!forceRefresh) {
       const cached = this.cached.get(key)
-      if (cached !== undefined) return Promise.resolve(cached)
+      if (cached !== undefined && cached.expiresAt > Date.now()) {
+        recordLawCache("search", "hit")
+        return Promise.resolve(cached.results)
+      }
     }
     const pending = this.pending.get(key)
-    if (pending !== undefined) return pending
+    if (pending !== undefined) {
+      recordLawCache("search", "shared")
+      return pending
+    }
 
+    recordLawCache("search", "miss")
     const request = loader().then((results) => {
-      if (results.length > 0) this.cached.set(key, results)
+      this.cached.set(key, {
+        results,
+        expiresAt: Date.now() + (results.length === 0 ? Math.min(this.ttlMs, 30_000) : this.ttlMs),
+      })
       return results
     })
     this.pending.set(key, request)

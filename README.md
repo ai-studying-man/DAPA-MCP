@@ -107,6 +107,7 @@ LAW_API_OC="<your-oc>" npm run backtest:law-api
 | `LAW_API_TIMEOUT_MS` | 아니오 | `15000` | 개별 공식 API 요청 timeout; Vercel 함수 한도 안에서 부분 결과를 반환하도록 제한 |
 | `LAW_API_RETRY_LIMIT` | 아니오 | `1` | 429/5xx 및 빈 응답·점검 HTML 재시도 상한 |
 | `LAW_API_CACHE_TTL_MS` | 아니오 | `300000` | API 검색 캐시 TTL(밀리초), `0`이면 캐시 비활성화 |
+| `DAPA_PERFORMANCE_LOG` | 아니오 | HTTP에서 활성화 | HTTP 요청별 JSON 성능 기록; `0`이면 비활성화. 목록·본문 API 대기/다운로드, 파싱, 캐시 적중, 요청 전체 시간을 stderr에 기록하며 검색어·OC·URL·원문은 기록하지 않음 |
 | `LAW_API_DETAIL_CACHE_TTL_MS` | 아니오 | `21600000` | 법령 상세 본문 캐시 TTL(기본 6시간), `0`이면 캐시 비활성화 |
 | `LAW_API_MAX_TEXT_RESPONSE_BYTES` | 아니오 | `8388608` | JSON/HTML API 응답 최대 바이트 |
 | `LAW_API_MAX_RESOURCE_RESPONSE_BYTES` | 아니오 | `26214400` | 별표·서식 파일 최대 바이트 |
