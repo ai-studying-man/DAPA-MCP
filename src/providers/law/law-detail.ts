@@ -87,7 +87,12 @@ export function parseLawDetailDocument(
     ...(effectiveDate === undefined ? {} : { effectiveDate }),
     status: "unknown",
     verified: true,
-    sourceUrl: "https://www.law.go.kr",
+    sourceUrl:
+      "https://www.law.go.kr/DRF/lawService.do?target=" +
+      config.target +
+      (config.sourceType === "law" || config.sourceType === "local_ordinance" ? "&MST=" : "&ID=") +
+      encodeURIComponent(documentId) +
+      "&type=HTML",
     retrievedAt,
     documentId,
   }

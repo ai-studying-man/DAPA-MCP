@@ -2,6 +2,7 @@ import { type ParsedCitation, parseCitation } from "../../lib/citation/parser.js
 import { DapaError } from "../../lib/errors/dapa-error.js"
 import { normalizeSearchText } from "../../lib/normalization/text.js"
 import type { DapaSearchResult, SearchResponse, SourceType } from "../../types/results.js"
+import { articleIdentity, citationLocationExists } from "./citation-location.js"
 import type { LawProvider } from "./law-provider.js"
 
 export const VERIFICATION_STATUSES = [
@@ -21,6 +22,7 @@ export type CitationVerification = {
   readonly sourceUrl?: string
   readonly documentId?: string
   readonly message: string
+  readonly verificationScope?: "article_location" | "case_identity"
 }
 
 export class CitationVerifier {
@@ -74,10 +76,17 @@ export class CitationVerifier {
     const articleNumber = citation.article?.match(/^제(\d+조(?:의\d+)?)/)?.[1]?.replace("조", "")
     const article = detail.detail?.articles.find(
       (item) =>
-        normalizeSearchText(item.articleNumber) === normalizeSearchText(articleNumber ?? ""),
+        normalizeSearchText(articleIdentity(item)) === normalizeSearchText(articleNumber ?? ""),
     )
     if (article === undefined)
       return withDocument(citation.raw, "NOT_FOUND", "해당 조문을 확인할 수 없습니다", document)
+    if (!citationLocationExists(article, citation.article ?? ""))
+      return withDocument(
+        citation.raw,
+        "NOT_FOUND",
+        "요청한 항·호를 공식 본문에서 확인할 수 없습니다",
+        document,
+      )
     if (
       citation.claimedArticleTitle !== undefined &&
       normalizeSearchText(article.title ?? "") !== normalizeSearchText(citation.claimedArticleTitle)
@@ -89,12 +98,15 @@ export class CitationVerifier {
         document,
       )
     }
-    return withDocument(
-      citation.raw,
-      "VERIFIED",
-      "문서명과 조문이 공식 본문에서 확인되었습니다",
-      document,
-    )
+    return {
+      ...withDocument(
+        citation.raw,
+        "VERIFIED",
+        "문서명과 조문이 공식 본문에서 확인되었습니다",
+        document,
+      ),
+      verificationScope: "article_location",
+    }
   }
 
   private async verifyCase(citation: ParsedCitation): Promise<CitationVerification> {
@@ -116,14 +128,14 @@ export class CitationVerifier {
       : withDocument(
           citation.raw,
           "VERIFIED",
-          "사건번호가 공식 판례·결정례 검색에서 확인되었습니다",
+          "사건번호 존재를 확인했습니다. 판결 내용과 답변 주장의 일치 여부는 별도 본문 검토가 필요합니다",
           document,
         )
   }
 }
 
 function legalDocumentSourceTypes(documentName: string): readonly SourceType[] {
-  if (/(?:규정|훈령|예규|고시)$/u.test(documentName)) return ["administrative_rule"]
+  if (/(?:규정|훈령|예규|고시|지침)$/u.test(documentName)) return ["administrative_rule"]
   if (/조례$/u.test(documentName)) return ["local_ordinance"]
   if (/시행규칙$/u.test(documentName)) return ["law"]
   if (/규칙$/u.test(documentName)) return ["law", "administrative_rule", "local_ordinance"]

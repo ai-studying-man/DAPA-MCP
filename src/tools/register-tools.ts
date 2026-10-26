@@ -8,6 +8,7 @@ import type { DapaPolicyProvider } from "../providers/dapa-policy/provider.js"
 import type { CitationVerifier } from "../providers/law/citation-verifier.js"
 import type { LawApiProvider } from "../providers/law/law-api-provider.js"
 import type { LawProvider } from "../providers/law/law-provider.js"
+import { catalogFreshness, probeLawSource } from "../providers/law/source-probe.js"
 import type { SearchResponse } from "../types/results.js"
 import { GetLegalDetailSchema, LEGAL_SOURCE_TYPES } from "./legal-tool-schemas.js"
 import { registerDapaPolicyTools } from "./register-dapa-policy-tools.js"
@@ -241,18 +242,22 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
       inputSchema: {},
       annotations: READ_ONLY_ANNOTATIONS,
     },
-    async () =>
-      textResult({
-        law: dependencies.law.health(),
+    async () => {
+      const probe = await probeLawSource(dependencies.law)
+      return textResult({
+        law: probe.state,
+        law_probe: probe,
         dapa_info: dependencies.dapaInfo.health(),
         dapa_catalog: dependencies.dapaCatalog.status().state,
+        catalog_freshness: catalogFreshness(dependencies.dapaCatalog.status().generatedAt),
         dapa_policy: dependencies.dapaPolicy.status().state,
         public_data: "not_configured",
         news: "not_configured",
         patent: "not_configured",
         paper: "not_configured",
         internal: "disabled",
-      }),
+      })
+    },
   )
 }
 

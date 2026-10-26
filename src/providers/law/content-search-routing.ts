@@ -11,6 +11,15 @@ const MANAGEMENT = { title: "방위사업관리규정", sourceType: "administrat
 const DEFENSE_LAW = { title: "방위사업법", sourceType: "law" } as const
 const TOPIC_ROUTES = [
   {
+    terms: /(?:사업추진기본전략|선행연구|사업타당성조사)/u,
+    documents: [
+      MANAGEMENT,
+      { title: "선행연구 수행지침", sourceType: "administrative_rule" },
+      { title: "방위사업법 시행령", sourceType: "law" },
+      DEFENSE_LAW,
+    ],
+  },
+  {
     terms: /(?:야전운용시험|운용시험|시험평가|전력발전)/u,
     documents: [
       MANAGEMENT,
@@ -43,11 +52,22 @@ export async function discoverMajorDocuments(
 ): Promise<MajorDocumentDiscovery> {
   const types = input.types ?? ["law", "administrative_rule"]
   const routes = TOPIC_ROUTES.filter(({ terms }) => terms.test(input.query.replace(/\s+/gu, "")))
+  const explicitTitle =
+    /([가-힣A-Za-z0-9·]+(?:법|시행령|시행규칙|규정|지침))\s*제\s*\d+\s*조/u.exec(input.query)?.[1]
+  const explicitDocuments: readonly MajorDocument[] =
+    explicitTitle === undefined
+      ? []
+      : [
+          {
+            title: explicitTitle,
+            sourceType: /규정|지침/u.test(explicitTitle) ? "administrative_rule" : "law",
+          },
+        ]
   const documents = [
     ...new Map(
-      routes
-        .flatMap<MajorDocument>(({ documents }) => documents)
-        .map((document) => [document.title, document]),
+      [...explicitDocuments, ...routes.flatMap<MajorDocument>(({ documents }) => documents)].map(
+        (document) => [document.title, document],
+      ),
     ).values(),
   ].filter(({ sourceType }) => types.includes(sourceType))
   const searches = await Promise.all(

@@ -14,13 +14,13 @@ export type ParsedCitation = {
 export function parseCitation(_value: string): ParsedCitation {
   const value = _value.trim()
   const lawMatch = value.match(
-    /^(.+?(?:법|령|규칙|규정|훈령|예규|고시|조례))\s*(제\d+조(?:의\d+)?)(?:\(([^()]+)\))?((?:제\d+항)?(?:제\d+호)?)$/,
+    /^(.+?(?:법|령|규칙|규정|훈령|예규|고시|조례|지침))\s*(제\d+조(?:의\d+)?)(?:\(([^()]+)\))?\s*((?:제\d+항)?\s*(?:제\d+호)?)$/,
   )
   if (lawMatch) {
     const documentName = lawMatch[1]
     const articleBase = lawMatch[2]
     const claimedArticleTitle = lawMatch[3]
-    const articleSuffix = lawMatch[4]
+    const articleSuffix = lawMatch[4]?.replace(/\s+/gu, "")
     const article = articleBase === undefined ? undefined : `${articleBase}${articleSuffix ?? ""}`
     if (documentName !== undefined && article !== undefined) {
       return {
@@ -33,7 +33,7 @@ export function parseCitation(_value: string): ParsedCitation {
     }
   }
 
-  const caseMatch = value.match(/^(대법원|헌법재판소|[가-힣]+법원)\s+(\d{4}[가-힣]{1,4}\d+)$/)
+  const caseMatch = value.match(/^(대법원|헌법재판소|[가-힣]+법원)\s+(\d{2,4}[가-힣]{1,4}\d+)$/)
   if (caseMatch) {
     const documentName = caseMatch[1]
     const caseNumber = caseMatch[2]

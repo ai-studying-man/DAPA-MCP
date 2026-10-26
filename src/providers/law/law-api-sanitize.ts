@@ -24,7 +24,7 @@ function sanitizeValue(value: unknown): unknown {
 
 export function sanitizeUrlString(value: string): string {
   return value
-    .replace(/([?&])(?:O|%4F)(?:C|%43)=[^&#\s"'<>]*/gi, "")
+    .replace(/([?&])(?:O|%4F)(?:C|%43)=[^&#\s"'<>]*/gi, "$1")
     .replace(/(?:%26|&)(?:O|%4F)(?:C|%43)(?:%3D|=)[^%&#\s"'<>]*/gi, "")
     .replaceAll("?&", "?")
     .replaceAll("&&", "&")

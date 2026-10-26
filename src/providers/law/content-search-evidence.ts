@@ -31,12 +31,44 @@ export function selectMatchingDetail(
             (article) => article.effectiveDate === undefined || article.effectiveDate <= asOfDate,
           ),
         }
+  const requested = queries.flatMap((query) => [
+    ...query.matchAll(/제\s*(\d+)\s*조(?:의\s*(\d+))?/gu),
+  ])
+  if (requested.length > 0) {
+    const articles = eligible.articles.filter((article) =>
+      requested.some(
+        (match) =>
+          article.articleNumber + (article.branch === undefined ? "" : `의${article.branch}`) ===
+          match[1] + (match[2] === undefined ? "" : `의${match[2]}`),
+      ),
+    )
+    return articles.length === 0
+      ? undefined
+      : {
+          basicInfo: eligible.basicInfo,
+          ...(eligible.lawKey === undefined ? {} : { lawKey: eligible.lawKey }),
+          articles,
+          supplementaryProvisions: [],
+          annexes: [],
+          forms: [],
+        }
+  }
   for (const query of queries) {
     const matching = selectDetailForQuery(eligible, query)
-    if (matching !== undefined)
+    if (matching !== undefined) {
+      const otherArticles = queries
+        .filter((other) => other !== query)
+        .flatMap((other) => selectDetailForQuery(eligible, other)?.articles.slice(0, 1) ?? [])
+      const articles = [
+        ...new Map(
+          [...matching.articles.slice(0, 1), ...otherArticles, ...matching.articles].map(
+            (article) => [`${article.articleNumber}:${article.branch ?? ""}`, article],
+          ),
+        ).values(),
+      ]
       return {
         ...matching,
-        articles: matching.articles.slice(0, MAX_MATCHING_ARTICLES),
+        articles: articles.slice(0, MAX_MATCHING_ARTICLES),
         supplementaryProvisions: matching.supplementaryProvisions.slice(
           0,
           MAX_MATCHING_AUXILIARY_SECTIONS,
@@ -44,6 +76,7 @@ export function selectMatchingDetail(
         annexes: matching.annexes.slice(0, MAX_MATCHING_AUXILIARY_SECTIONS),
         forms: matching.forms.slice(0, MAX_MATCHING_AUXILIARY_SECTIONS),
       }
+    }
   }
   return undefined
 }
@@ -55,6 +88,11 @@ function selectDetailForQuery(
   const queries = [query]
   const articles = detail.articles.filter((article) =>
     textContainsAnyQuery(`${article.title ?? ""} ${article.text}`, queries),
+  )
+  articles.sort(
+    (left, right) =>
+      Number(textContainsAnyQuery(right.title ?? "", queries)) -
+      Number(textContainsAnyQuery(left.title ?? "", queries)),
   )
   const supplementaryProvisions = detail.supplementaryProvisions.filter((provision) =>
     textContainsAnyQuery(provision.text, queries),

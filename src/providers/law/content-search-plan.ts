@@ -54,6 +54,14 @@ const QUESTION_WORDS = new Set([
   "설명해줘",
   "설명해주세요",
   "적용되",
+  "어떻게",
+  "다른가요",
+  "무엇인가요",
+  "차이",
+  "차이가",
+  "비교",
+  "포함해야",
+  "하나요",
 ])
 const LEGAL_DOCUMENT_TERM = /(법|법령|시행령|시행규칙|규정)$/u
 
@@ -90,7 +98,11 @@ export function planContentSearch(query: string): ContentQueryPlan {
     .sort((left, right) => contextScore(right) - contextScore(left))
   const documentTerms = contextTerms.filter(isDocumentTitleQuery)
   const contextualIssue = contextTerms.length > 0 && issueTerms.length > 0
+  const comparing = /차이|다르|다른|비교/u.test(collapsed)
+  const explicitArticle = /제\s*\d+\s*조/u.test(collapsed)
   const ordered = [
+    ...(explicitArticle ? documentTerms : []),
+    ...(comparing ? issueTerms.slice(0, 2) : []),
     issueTerms[0],
     documentTerms[0],
     ...(contextualIssue ? issueTerms.slice(1) : [collapsed, compact, ...issueTerms.slice(1)]),
@@ -101,7 +113,12 @@ export function planContentSearch(query: string): ContentQueryPlan {
   )
   return {
     searchQueries,
-    evidenceQueries: [...new Set(issueTerms.length > 0 ? issueTerms : documentTerms)],
+    evidenceQueries: [
+      ...new Set([
+        ...(explicitArticle ? [collapsed] : []),
+        ...(issueTerms.length > 0 ? issueTerms : documentTerms),
+      ]),
+    ],
   }
 }
 

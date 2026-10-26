@@ -1,5 +1,6 @@
 import { normalizeSearchText } from "../../lib/normalization/text.js"
 import type { ResponseStatus, SourceType } from "../../types/results.js"
+import { answerEvidence } from "./answer-evidence.js"
 import { planCaseSearch } from "./case-search-plan.js"
 import {
   type LegalContentHit,
@@ -29,6 +30,7 @@ export type CaseContentHit = LegalContentHit & {
 export type ParallelContentSearchResponse = Omit<LegalContentSearchResponse, "results"> & {
   readonly results: readonly CaseContentHit[]
   readonly lanes: readonly ContentSearchLane[]
+  readonly answerEvidence: ReturnType<typeof answerEvidence>
 }
 type Provider = Pick<LawProvider, "search" | "getDetail">
 
@@ -66,6 +68,7 @@ export async function searchLegalContentParallel(
     (lane) => lane.status === "SOURCE_UNAVAILABLE" || lane.status === "PARTIAL_RESULT",
   )
   return {
+    answerEvidence: answerEvidence(input.query, results),
     status:
       active.length > 0 && active.every((lane) => lane.status === "SOURCE_UNAVAILABLE")
         ? "SOURCE_UNAVAILABLE"

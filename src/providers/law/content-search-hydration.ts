@@ -46,7 +46,8 @@ export async function hydrateDocuments(
             ? undefined
             : selectMatchingDetail(detail.detail, request.queries, evidenceDate)
         const excerptEvidence =
-          matchingDetail === undefined
+          matchingDetail === undefined &&
+          !request.queries.some((query) => /제\s*\d+\s*조/u.test(query))
             ? extractExcerptEvidence(rawContent, request.queries, evidenceDate)
             : undefined
         const excerpts = excerptEvidence?.excerpts ?? []

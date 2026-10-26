@@ -8,3 +8,5 @@ Thumbs.db
 *.tsbuildinfo
 .omo/
 .live-catalog-audit-output.json
+.vercel/
+.qa-results/

@@ -98,6 +98,7 @@ export class LawHttpClient {
             const response = await this.client.get(endpoint, {
               searchParams,
               timeout: this.requestTimeoutMs(deadlineAt),
+              signal: AbortSignal.timeout(this.requestTimeoutMs(deadlineAt)),
             })
             const bytes = await readBoundedResponse(response, this.maxTextResponseBytes)
             const text = new TextDecoder().decode(bytes)
@@ -234,7 +235,11 @@ function responseSizeError(maxBytes: number): DapaError {
 
 function throwLawHttpError(error: Error): never {
   if (error instanceof DapaError) throw error
-  if (error instanceof TimeoutError) {
+  if (
+    error instanceof TimeoutError ||
+    error.name === "TimeoutError" ||
+    error.name === "AbortError"
+  ) {
     throw new DapaError("TIMEOUT", "법제처 API 요청 시간이 초과되었습니다", { cause: error })
   }
   if (error instanceof HTTPError) {

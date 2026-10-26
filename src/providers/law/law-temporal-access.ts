@@ -1,3 +1,4 @@
+import { HTTPError } from "ky"
 import { TtlCache } from "../../lib/cache/ttl-cache.js"
 import { DapaError } from "../../lib/errors/dapa-error.js"
 import { resolveAdministrativeEffective } from "./law-administrative-effective.js"
@@ -7,6 +8,7 @@ import { koreaToday, type TemporalInput, temporalRequest } from "./law-api-tempo
 import type { LawHttpClient } from "./law-http.js"
 import {
   activeOn,
+  dateValue,
   filterOfficialList,
   mergeOfficialLists,
   type OfficialVersion,
@@ -194,8 +196,40 @@ export class LawTemporalAccess {
             efYd: version.effectiveDate?.replaceAll("-", "") ?? "",
           }
         : { ...params, target: "admrul", ID: version.documentId }
-    const text = await this.bodies.read(request, input)
-    return confirmTemporalDetail(text, version, input)
+    try {
+      const text = await this.bodies.read(request, input)
+      return confirmTemporalDetail(text, version, input)
+    } catch (error) {
+      if (
+        !(error instanceof DapaError) ||
+        !(error.cause instanceof HTTPError) ||
+        error.cause.response.status !== 404 ||
+        category !== "law"
+      )
+        throw error
+      // The alternate official endpoint is usable only for the identical verified version.
+      const text = await this.bodies.read(
+        {
+          ...params,
+          target: "law",
+          MST: version.documentId,
+        },
+        input,
+      )
+      const data = parseLawApiResponse(text, getLawApiConfig("law.detail")).data
+      const basic = officialBasicInfo(data, "law")
+      if (
+        dateValue(basic["시행일자"]) !== version.effectiveDate ||
+        scalar(basic["법령명_한글"]) !== version.title ||
+        (version.stableId !== undefined && scalar(basic["법령ID"]) !== version.stableId)
+      ) {
+        throw new DapaError(
+          "SOURCE_UNAVAILABLE",
+          "대체 공식 본문이 요청한 법령 버전과 일치하지 않습니다",
+        )
+      }
+      return confirmTemporalDetail(text, version, input)
+    }
   }
 
   private async readList(params: Readonly<Record<string, string>>, input: TemporalAccessInput) {

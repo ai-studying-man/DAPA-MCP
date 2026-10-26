@@ -44,6 +44,7 @@ export function parseLegalDocumentDetail(root: Record<string, unknown>): LegalDo
 
 function parseArticles(value: unknown): readonly LegalArticle[] {
   return records(value).flatMap((item) => {
+    if (item["조문여부"] === "전문") return []
     const articleNumber = stringValue(item["조문번호"])
     if (articleNumber === undefined) return []
     const text = [textByKey(item, "조문내용"), textByKey(item, "항")]
@@ -138,7 +139,10 @@ function flattenText(value: unknown): string {
   const record = asRecord(value)
   if (record === undefined) return ""
   return Object.entries(record)
-    .filter(([key]) => key.endsWith("내용") || key === "content")
+    .filter(
+      ([key]) =>
+        key.endsWith("내용") || key === "content" || ["항", "호", "목", "세목"].includes(key),
+    )
     .map(([, child]) => flattenText(child))
     .filter(Boolean)
     .join("\n")
