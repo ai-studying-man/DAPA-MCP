@@ -86,7 +86,10 @@ export async function searchLegalContent(
   const rankedCandidates = routed
     ? major.documents
     : rankCandidates([...state.candidates.values()], queries)
-  const initialCount = Math.min(limit, routed ? major.documents.length : profile.initialDocuments)
+  const initialCount = Math.min(
+    mode === "thorough" ? profile.maxDocuments : limit,
+    routed ? major.documents.length : profile.initialDocuments,
+  )
   let outcomes = await hydrateDocuments({
     law,
     documents: rankedCandidates.slice(0, initialCount),

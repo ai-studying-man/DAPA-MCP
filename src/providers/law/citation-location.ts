@@ -29,7 +29,7 @@ export function requestedArticles(queries: readonly string[]): readonly string[]
 }
 
 export function requestedDocumentTitle(query: string): string | undefined {
-  return /^(.+?(?:법|시행령|시행규칙|규정|지침))\s*제\s*\d+\s*조/u.exec(query)?.[1]?.trim()
+  return /^(.+?(?:법|시행령|시행규칙|규정|지침))(?:\s*제\s*\d+\s*조|에서)/u.exec(query)?.[1]?.trim()
 }
 
 export function selectRequestedDetail(

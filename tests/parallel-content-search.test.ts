@@ -5,6 +5,53 @@ import { searchLegalContentParallel } from "../src/providers/law/parallel-conten
 import type { DapaSearchResult } from "../src/types/results.js"
 
 describe("parallel legal and case discovery", () => {
+  it("expands a fast constitutional search when only an unrelated freedom case is found", async () => {
+    const documents: DapaSearchResult[] = Array.from({ length: 5 }, (_, index) => ({
+      id: String(index),
+      documentId: String(index),
+      source: "official",
+      sourceType: "constitutional_case",
+      title: `헌재 결정 ${index}`,
+      status: "unknown",
+      verified: true,
+      retrievedAt: "2026-10-27",
+    }))
+    const inspected: string[] = []
+    const law: Pick<LawProvider, "search" | "getDetail"> = {
+      search: async () => ({ status: "OK", results: documents, errors: [] }),
+      getDetail: async ({ documentId }) => {
+        inspected.push(documentId)
+        const document = documents.find((candidate) => candidate.documentId === documentId)
+        if (document === undefined) throw new Error("Unknown test document")
+        return {
+          status: "OK",
+          errors: [],
+          results: [
+            {
+              ...document,
+              documentId,
+              content: JSON.stringify({
+                결정요지:
+                  documentId === "4"
+                    ? "입찰참가자격 제한은 직업의 자유를 침해하지 않는다"
+                    : "퇴직급여와 직업의 자유",
+              }),
+            },
+          ],
+        }
+      },
+    }
+    const result = await searchLegalContentParallel(law, {
+      query: "입찰참가자격 제한이 직업의 자유를 침해하나요?",
+      types: ["constitutional_case"],
+      mode: "fast",
+      limit: 5,
+    })
+    expect(inspected).toContain("4")
+    expect(result.answerEvidence.decision).toBe("grounded")
+    expect(result.results[0]?.document.documentId).toBe("4")
+  })
+
   it("places body-confirmed defense cases before general comparative cases", async () => {
     // Given
     const document = (id: string, date: string): DapaSearchResult => ({

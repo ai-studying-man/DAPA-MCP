@@ -50,13 +50,17 @@ export async function searchLegalContentParallel(
     runLane(() =>
       legalTypes.length === 0
         ? Promise.resolve(empty())
-        : searchLegalContent(law, {
+        : searchWithEvidenceExpansion(law, {
             ...request,
             query: input.types === undefined ? planCaseSearch(input.query).legalQuery : input.query,
             types: legalTypes,
           }),
     ),
-    runLane(() => (caseTypes.length === 0 ? Promise.resolve(empty()) : searchCases(law, request))),
+    runLane(() =>
+      caseTypes.length === 0
+        ? Promise.resolve(empty())
+        : searchWithEvidenceExpansion(law, request, true),
+    ),
   ])
   const active = [
     legalTypes.length > 0 ? legal : undefined,
@@ -90,6 +94,23 @@ export async function searchLegalContentParallel(
       },
     ],
   }
+}
+
+async function searchWithEvidenceExpansion(
+  law: Provider,
+  input: LegalContentSearchInput,
+  cases = false,
+): Promise<LegalContentSearchResponse> {
+  const search = cases ? searchCases : searchLegalContent
+  const first = await search(law, input)
+  if (
+    input.mode === "thorough" ||
+    answerEvidence(input.query, first.results).decision !== "partial" ||
+    Date.now() + 1_000 >= (input.deadlineAt ?? 0)
+  )
+    return first
+  const expanded = await search(law, { ...input, mode: "thorough" })
+  return answerEvidence(input.query, expanded.results).decision === "grounded" ? expanded : first
 }
 
 async function runLane(

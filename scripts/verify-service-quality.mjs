@@ -125,9 +125,11 @@ try {
           ? "NO_VERIFIED_BODY"
           : missing.length > 0
             ? "PARTIAL_EVIDENCE"
-            : direct
-              ? "BODY_CONFIRMED"
-              : "GENERAL_CASE_ONLY"
+            : !direct
+              ? "GENERAL_CASE_ONLY"
+              : payload.answerEvidence?.decision !== "grounded"
+                ? "PARTIAL_EVIDENCE"
+                : "BODY_CONFIRMED"
       const result = {
         ...question,
         elapsedMs: Math.round(performance.now() - started),
