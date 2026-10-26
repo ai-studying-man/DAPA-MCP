@@ -8,7 +8,6 @@ import { koreaToday, type TemporalInput, temporalRequest } from "./law-api-tempo
 import type { LawHttpClient } from "./law-http.js"
 import {
   activeOn,
-  dateValue,
   filterOfficialList,
   mergeOfficialLists,
   type OfficialVersion,
@@ -19,6 +18,7 @@ import {
   versionOf,
 } from "./law-temporal-data.js"
 import {
+  confirmAlternateLawDetail,
   confirmTemporalDetail,
   LawVersionBodyCache,
   type TemporalDetail,
@@ -229,19 +229,7 @@ export class LawTemporalAccess {
         },
         input,
       )
-      const data = parseLawApiResponse(text, getLawApiConfig("law.detail")).data
-      const basic = officialBasicInfo(data, "law")
-      if (
-        dateValue(basic["시행일자"]) !== version.effectiveDate ||
-        scalar(basic["법령명_한글"]) !== version.title ||
-        (version.stableId !== undefined && scalar(basic["법령ID"]) !== version.stableId)
-      ) {
-        throw new DapaError(
-          "SOURCE_UNAVAILABLE",
-          "대체 공식 본문이 요청한 법령 버전과 일치하지 않습니다",
-        )
-      }
-      return confirmTemporalDetail(text, version, input)
+      return confirmAlternateLawDetail(text, version, input)
     }
   }
 
