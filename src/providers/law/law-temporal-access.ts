@@ -94,10 +94,12 @@ export class LawTemporalAccess {
         "행정규칙의 기준일 조회는 공식 API에서 지원되지 않습니다",
       )
     const known =
-      input.forceRefresh === true || input.asOfDate !== undefined
-        ? undefined
-        : this.versions.get(this.key(category, documentId))
-    if (known !== undefined) return this.readVersion(params, known, input)
+      input.asOfDate !== undefined ? undefined : this.versions.get(this.key(category, documentId))
+    if (known !== undefined) {
+      const refreshed =
+        input.forceRefresh === true ? await this.resolveVersion(params, known, input) : known
+      if (refreshed !== undefined) return this.readVersion(params, refreshed, input)
+    }
     const identityText = await this.bodies.read(
       { ...params, target: category === "law" ? "law" : "admrul" },
       input,

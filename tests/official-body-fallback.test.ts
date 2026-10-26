@@ -9,14 +9,16 @@ afterEach(async () => {
 
 describe("official effective body fallback", () => {
   it.each([
-    ["20200101", "OK", false],
-    ["20210101", "SOURCE_UNAVAILABLE", false],
-    ["20200101", "OK", true],
-    ["20210101", "SOURCE_UNAVAILABLE", true],
+    ["20200101", "OK", false, false],
+    ["20210101", "SOURCE_UNAVAILABLE", false, false],
+    ["20200101", "OK", true, false],
+    ["20210101", "SOURCE_UNAVAILABLE", true, false],
+    ["20200101", "OK", false, true],
   ])(
     "uses only the same official version after an effective endpoint 404: %s",
-    async (bodyDate, expected, timeout) => {
+    async (bodyDate, expected, timeout, forceRefresh) => {
       // Given
+      let effectiveAttempted = false
       const api = await startFakeLawApi((request, response) => {
         const url = new URL(request.url ?? "/", "http://localhost")
         response.setHeader("content-type", "application/json")
@@ -38,10 +40,16 @@ describe("official effective body fallback", () => {
             }),
           )
         } else if (url.searchParams.get("target") === "eflaw") {
+          effectiveAttempted = true
           if (timeout) return
           response.statusCode = 404
           response.end("{}")
         } else {
+          if (forceRefresh && !effectiveAttempted) {
+            response.statusCode = 404
+            response.end("{}")
+            return
+          }
           response.end(
             JSON.stringify({
               법령: {
@@ -61,7 +69,7 @@ describe("official effective body fallback", () => {
       })
       await law.search({ query: "방위사업법", types: ["law"] })
       // When
-      const result = await law.getDetail({ documentId: "1", sourceType: "law" })
+      const result = await law.getDetail({ documentId: "1", sourceType: "law", forceRefresh })
       // Then
       expect({ status: result.status, errors: result.errors }).toMatchObject({
         status: expected,

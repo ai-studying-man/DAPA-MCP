@@ -239,13 +239,20 @@ describe("official version body cache", () => {
 
   it("bypasses both cached mapping and body when forceRefresh is requested", async () => {
     // Given
-    const { provider, requests } = await fixture()
+    const { provider, requests, state } = await fixture()
     await provider.getDetail({ sourceType: "law", documentId: "1" })
+    state.currentId = "3"
     // When
-    await provider.getDetail({ sourceType: "law", documentId: "1", forceRefresh: true })
+    const result = await provider.getDetail({
+      sourceType: "law",
+      documentId: "1",
+      forceRefresh: true,
+    })
     // Then
     expect(requests.filter((url) => url.pathname === "/lawSearch.do")).toHaveLength(2)
-    expect(requests.filter((url) => url.pathname === "/lawService.do")).toHaveLength(4)
+    expect(result.results[0]?.documentId).toBe("3")
+    expect(result.detail?.articles[0]?.text).toContain("본문 3")
+    expect(requests.filter((url) => url.pathname === "/lawService.do")).toHaveLength(3)
   })
 
   it("rechecks today's mapping at Korea midnight even within mapping TTL", async () => {
