@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { normalizeSearchText } from "../../lib/normalization/text.js"
 import type { LegalDocumentDetail } from "../../types/results.js"
+import { requestedArticles, selectRequestedDetail } from "./citation-location.js"
 import { dateValue } from "./law-temporal-data.js"
 
 const RecordSchema = z.record(z.string(), z.unknown())
@@ -31,27 +32,9 @@ export function selectMatchingDetail(
             (article) => article.effectiveDate === undefined || article.effectiveDate <= asOfDate,
           ),
         }
-  const requested = queries.flatMap((query) => [
-    ...query.matchAll(/제\s*(\d+)\s*조(?:의\s*(\d+))?/gu),
-  ])
+  const requested = requestedArticles(queries)
   if (requested.length > 0) {
-    const articles = eligible.articles.filter((article) =>
-      requested.some(
-        (match) =>
-          article.articleNumber + (article.branch === undefined ? "" : `의${article.branch}`) ===
-          match[1] + (match[2] === undefined ? "" : `의${match[2]}`),
-      ),
-    )
-    return articles.length === 0
-      ? undefined
-      : {
-          basicInfo: eligible.basicInfo,
-          ...(eligible.lawKey === undefined ? {} : { lawKey: eligible.lawKey }),
-          articles,
-          supplementaryProvisions: [],
-          annexes: [],
-          forms: [],
-        }
+    return selectRequestedDetail(eligible, queries)
   }
   for (const query of queries) {
     const matching = selectDetailForQuery(eligible, query)

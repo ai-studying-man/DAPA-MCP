@@ -1,4 +1,5 @@
-import type { LegalArticle } from "../../types/results.js"
+import { normalizeSearchText } from "../../lib/normalization/text.js"
+import type { LegalArticle, LegalDocumentDetail } from "../../types/results.js"
 
 export function citationLocationExists(article: LegalArticle, citation: string): boolean {
   const paragraph = citation.match(/제(\d+)항/u)?.[1]
@@ -17,4 +18,41 @@ export function citationLocationExists(article: LegalArticle, citation: string):
 
 export function articleIdentity(article: LegalArticle): string {
   return article.articleNumber + (article.branch === undefined ? "" : `의${article.branch}`)
+}
+
+export function requestedArticles(queries: readonly string[]): readonly string[] {
+  return queries.flatMap((query) =>
+    [...query.matchAll(/제\s*(\d+)\s*조(?:의\s*(\d+))?/gu)].map(
+      (match) => match[1] + (match[2] === undefined ? "" : `의${match[2]}`),
+    ),
+  )
+}
+
+export function requestedDocumentTitle(query: string): string | undefined {
+  return /^(.+?(?:법|시행령|시행규칙|규정|지침))\s*제\s*\d+\s*조/u.exec(query)?.[1]?.trim()
+}
+
+export function selectRequestedDetail(
+  detail: LegalDocumentDetail,
+  queries: readonly string[],
+): LegalDocumentDetail | undefined {
+  const title = queries.map(requestedDocumentTitle).find((value) => value !== undefined)
+  if (
+    title !== undefined &&
+    detail.basicInfo.title !== undefined &&
+    normalizeSearchText(title) !== normalizeSearchText(detail.basicInfo.title)
+  )
+    return undefined
+  const requested = requestedArticles(queries)
+  const articles = detail.articles.filter((article) => requested.includes(articleIdentity(article)))
+  return articles.length === 0
+    ? undefined
+    : {
+        basicInfo: detail.basicInfo,
+        ...(detail.lawKey === undefined ? {} : { lawKey: detail.lawKey }),
+        articles,
+        supplementaryProvisions: [],
+        annexes: [],
+        forms: [],
+      }
 }

@@ -62,6 +62,14 @@ const QUESTION_WORDS = new Set([
   "비교",
   "포함해야",
   "하나요",
+  "어떤",
+  "무엇이며",
+  "있나요",
+  "된",
+  "경우",
+  "사례",
+  "충돌한",
+  "뜻",
 ])
 const LEGAL_DOCUMENT_TERM = /(법|법령|시행령|시행규칙|규정)$/u
 
@@ -90,9 +98,17 @@ export function planContentSearch(query: string): ContentQueryPlan {
   const coreTerms = tokens
     .map(stripKoreanParticle)
     .filter((value) => value.length >= 2 && !QUESTION_WORDS.has(value))
-  const issueTerms = coreTerms
-    .filter((value) => !isDocumentContext(value))
-    .sort((left, right) => right.length - left.length)
+  const phrases = ["알 권리", "직업의 자유", "사업추진기본전략"].filter((term) =>
+    normalizeSearchText(collapsed).includes(normalizeSearchText(term)),
+  )
+  const issueTerms = [
+    ...new Set([
+      ...phrases,
+      ...coreTerms
+        .filter((value) => !isDocumentContext(value))
+        .sort((left, right) => right.length - left.length),
+    ]),
+  ]
   const contextTerms = coreTerms
     .filter(isDocumentContext)
     .sort((left, right) => contextScore(right) - contextScore(left))

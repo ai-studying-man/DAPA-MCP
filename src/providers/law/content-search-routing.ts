@@ -1,5 +1,6 @@
 import { normalizeSearchText } from "../../lib/normalization/text.js"
 import type { DapaSearchResult, SearchResponse, SourceType } from "../../types/results.js"
+import { requestedDocumentTitle } from "./citation-location.js"
 import type { LawProvider, LegalSearchInput } from "./law-provider.js"
 
 type MajorDocument = {
@@ -53,21 +54,27 @@ export async function discoverMajorDocuments(
   const types = input.types ?? ["law", "administrative_rule"]
   const routes = TOPIC_ROUTES.filter(({ terms }) => terms.test(input.query.replace(/\s+/gu, "")))
   const explicitTitle =
-    /([가-힣A-Za-z0-9·]+(?:법|시행령|시행규칙|규정|지침))\s*제\s*\d+\s*조/u.exec(input.query)?.[1]
+    requestedDocumentTitle(input.query) ??
+    /^(.+?조례)(?:에서|의|에|를|\s|$)/u.exec(input.query)?.[1]
   const explicitDocuments: readonly MajorDocument[] =
     explicitTitle === undefined
       ? []
       : [
           {
             title: explicitTitle,
-            sourceType: /규정|지침/u.test(explicitTitle) ? "administrative_rule" : "law",
+            sourceType: /조례$/u.test(explicitTitle)
+              ? "local_ordinance"
+              : /규정|지침/u.test(explicitTitle)
+                ? "administrative_rule"
+                : "law",
           },
         ]
   const documents = [
     ...new Map(
-      [...explicitDocuments, ...routes.flatMap<MajorDocument>(({ documents }) => documents)].map(
-        (document) => [document.title, document],
-      ),
+      (explicitDocuments.length > 0
+        ? explicitDocuments
+        : routes.flatMap<MajorDocument>(({ documents }) => documents)
+      ).map((document) => [document.title, document]),
     ).values(),
   ].filter(({ sourceType }) => types.includes(sourceType))
   const searches = await Promise.all(

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { parseCitation } from "../src/lib/citation/parser.js"
+import { requestedDocumentTitle } from "../src/providers/law/citation-location.js"
 import { selectMatchingDetail } from "../src/providers/law/content-search-evidence.js"
 import { planContentSearch } from "../src/providers/law/content-search-plan.js"
 import { sanitizeUrlString } from "../src/providers/law/law-api-sanitize.js"
@@ -59,6 +60,22 @@ describe("official evidence preservation", () => {
 })
 
 describe("question and citation routing", () => {
+  it.each(["선행연구 수행지침", "방위사업법 시행령"])(
+    "preserves spaced document title %s",
+    (title) => {
+      // Given / When / Then
+      expect(requestedDocumentTitle(`${title} 제3조를 설명해줘`)).toBe(title)
+    },
+  )
+  it("rejects an article with the same number from a different document", () => {
+    // Given
+    const detail = parseLegalDocumentDetail({
+      기본정보: { 법령명_한글: "방위사업관리규정" },
+      조문: { 조문단위: [{ 조문번호: "3", 조문내용: "제3조 다른 내용" }] },
+    })
+    // When / Then
+    expect(selectMatchingDetail(detail, ["방위사업법 제3조", "다른"])).toBeUndefined()
+  })
   it("searches both comparison concepts before conversational filler", () => {
     // Given
     const query = "선행연구와 사업타당성조사는 어떻게 다른가요?"
