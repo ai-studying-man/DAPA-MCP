@@ -67,7 +67,7 @@ const questions = [
     id: 10,
     type: "constitutional_case",
     query: "입찰참가자격 제한이 직업의 자유를 침해하는지 판단한 헌재 사례가 있나요?",
-    terms: ["직업", "자유"],
+    terms: ["입찰참가", "직업", "자유"],
   },
 ]
 

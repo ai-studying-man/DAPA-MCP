@@ -49,6 +49,8 @@
       "!node_modules",
       "!dist",
       "!coverage",
+      "!.qa-results",
+      "!.vercel",
       "!DAPA_info/legal/catalog.json",
       "!DAPA_info/legal/coverage-report.json",
       "!DAPA_info/policy/catalog.json"

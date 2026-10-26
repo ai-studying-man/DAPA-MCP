@@ -197,13 +197,26 @@ export class LawTemporalAccess {
           }
         : { ...params, target: "admrul", ID: version.documentId }
     try {
-      const text = await this.bodies.read(request, input)
+      const text = await this.bodies.read(
+        request,
+        category === "law"
+          ? {
+              ...input,
+              deadlineAt: Math.min(
+                input.deadlineAt ?? Number.POSITIVE_INFINITY,
+                Date.now() + 4_000,
+              ),
+            }
+          : input,
+      )
       return confirmTemporalDetail(text, version, input)
     } catch (error) {
       if (
         !(error instanceof DapaError) ||
-        !(error.cause instanceof HTTPError) ||
-        error.cause.response.status !== 404 ||
+        !(
+          error.code === "TIMEOUT" ||
+          (error.cause instanceof HTTPError && error.cause.response.status === 404)
+        ) ||
         category !== "law"
       )
         throw error

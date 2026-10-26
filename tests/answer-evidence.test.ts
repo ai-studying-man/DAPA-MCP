@@ -22,6 +22,18 @@ function hit(text: string, match: LegalContentHit["match"]): LegalContentHit {
 }
 
 describe("answer evidence gate", () => {
+  it("rejects a constitutional case with freedom language but no requested procurement issue", () => {
+    const unrelated = hit("직업의 자유와 퇴직급여의 평등권", "content")
+    const result = answerEvidence("입찰참가자격 제한이 직업의 자유를 침해하나요?", [
+      {
+        ...unrelated,
+        document: { ...unrelated.document, sourceType: "constitutional_case" },
+      },
+    ])
+    expect(result.decision).toBe("partial")
+    expect(result.missingTerms).toContain("입찰참가자격 제한")
+  })
+
   it("abstains when only search metadata is available", () => {
     // Given / When
     const result = answerEvidence("군수품이란?", [hit("군수품 정의", "metadata")])

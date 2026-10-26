@@ -9,11 +9,13 @@ afterEach(async () => {
 
 describe("official effective body fallback", () => {
   it.each([
-    ["20200101", "OK"],
-    ["20210101", "SOURCE_UNAVAILABLE"],
+    ["20200101", "OK", false],
+    ["20210101", "SOURCE_UNAVAILABLE", false],
+    ["20200101", "OK", true],
+    ["20210101", "SOURCE_UNAVAILABLE", true],
   ])(
     "uses only the same official version after an effective endpoint 404: %s",
-    async (bodyDate, expected) => {
+    async (bodyDate, expected, timeout) => {
       // Given
       const api = await startFakeLawApi((request, response) => {
         const url = new URL(request.url ?? "/", "http://localhost")
@@ -36,6 +38,7 @@ describe("official effective body fallback", () => {
             }),
           )
         } else if (url.searchParams.get("target") === "eflaw") {
+          if (timeout) return
           response.statusCode = 404
           response.end("{}")
         } else {
@@ -50,7 +53,12 @@ describe("official effective body fallback", () => {
         }
       })
       apis.push(api)
-      const law = new LawProvider({ apiKey: "test", baseUrl: api.baseUrl, retryLimit: 0 })
+      const law = new LawProvider({
+        apiKey: "test",
+        baseUrl: api.baseUrl,
+        retryLimit: 0,
+        timeoutMs: timeout ? 100 : 1000,
+      })
       await law.search({ query: "방위사업법", types: ["law"] })
       // When
       const result = await law.getDetail({ documentId: "1", sourceType: "law" })

@@ -98,7 +98,7 @@ export function planContentSearch(query: string): ContentQueryPlan {
   const coreTerms = tokens
     .map(stripKoreanParticle)
     .filter((value) => value.length >= 2 && !QUESTION_WORDS.has(value))
-  const phrases = ["알 권리", "직업의 자유", "사업추진기본전략"].filter((term) =>
+  const phrases = ["입찰참가자격", "알 권리", "직업의 자유", "사업추진기본전략"].filter((term) =>
     normalizeSearchText(collapsed).includes(normalizeSearchText(term)),
   )
   const issueTerms = [
