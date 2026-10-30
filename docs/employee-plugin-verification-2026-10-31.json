@@ -1,0 +1,604 @@
+{
+  "testedAtStart": "2026-10-30T15:07:59.096Z",
+  "testedAtEnd": "2026-10-30T15:09:52.260Z",
+  "codeRevision": "eda6d5d5dbc33e9baad6a8a908b6afaff8d7e21c",
+  "plugin": "방위사업 법령 도우미",
+  "endpoint": "https://dapa-law-mcp.vercel.app/law",
+  "measurement": "Sequential actual installed 방위사업 법령 도우미 plugin calls; wall-clock from tool request start through original review and completed answer artifact. Includes additional detail calls and citation existence checks. Excludes user message queue, UI rendering, and unrelated work. Retrieval times are separate. Not an independent employee ChatGPT session SLA.",
+  "summary": {
+    "total": 10,
+    "sourceSupportedWithStatedLimits": 9,
+    "limitedSupplement": 1,
+    "search": {
+      "minMs": 1168,
+      "medianMs": 1960,
+      "averageMs": 2389.5,
+      "maxMs": 4908
+    },
+    "allToolCalls": {
+      "minMs": 2203,
+      "medianMs": 3077,
+      "averageMs": 3698.8,
+      "maxMs": 7997
+    },
+    "fullProcessing": {
+      "minMs": 7015,
+      "medianMs": 9369.5,
+      "averageMs": 10747.6,
+      "maxMs": 24709
+    }
+  },
+  "records": [
+    {
+      "id": 1,
+      "query": "방위사업법 제3조에서 방위력개선사업의 뜻을 설명해줘",
+      "types": ["law"],
+      "startedAt": "2026-10-30T15:07:59.096Z",
+      "searchMs": 4470,
+      "toolMs": 5612,
+      "finishedAt": "2026-10-30T15:08:09.804Z",
+      "fullProcessingMs": 10708,
+      "answer": "군사력을 더 좋게 만들기 위해 무기를 구매하거나 새로 개발·성능개량하고, 그에 필요한 시설 등을 설치하는 사업입니다. 방위사업법 제3조제1호가 이 범위를 정합니다. 예를 들어 새 무기를 사거나 기존 무기의 성능을 높이는 사업이 해당할 수 있습니다. 실제 사업의 해당 여부는 사업 내용과 원문을 함께 확인해야 합니다.",
+      "sources": [
+        {
+          "documentId": "290795",
+          "location": "제3조제1호",
+          "url": "https://www.law.go.kr/DRF/lawService.do?target=law&MST=290795&type=HTML"
+        }
+      ],
+      "assessment": "정의 원문 및 조문 존재 확인",
+      "outcome": "supported",
+      "answerEvidence": {
+        "decision": "grounded",
+        "bodyCount": 1,
+        "comparisonTerms": [],
+        "comparisonCoverage": [],
+        "missingTerms": [],
+        "requiredContext": [],
+        "claimVerification": "not_performed"
+      },
+      "citationCheck": {
+        "results": [
+          {
+            "citation": "방위사업법 제3조",
+            "status": "VERIFIED",
+            "message": "문서명과 조문이 공식 본문에서 확인되었습니다",
+            "documentId": "290795",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=eflaw&MST=290795&type=HTML&mobileYn=&efYd=20261002",
+            "verificationScope": "article_location"
+          }
+        ]
+      },
+      "sourceQuotes": [
+        "군사력을 개선하기 위한 무기체계의 구매 및 신규개발ㆍ성능개량 등을 포함한 연구개발"
+      ]
+    },
+    {
+      "id": 2,
+      "query": "방위사업법에서 방위력개선사업과 군수품 조달은 어떤 차이가 있나요?",
+      "startedAt": "2026-10-30T15:08:09.804Z",
+      "searchMs": 1902,
+      "toolMs": 2865,
+      "finishedAt": "2026-10-30T15:08:19.161Z",
+      "fullProcessingMs": 9357,
+      "answer": "방위력개선사업은 군사력을 개선하기 위한 사업의 범위이고, 군수품 조달은 군이 사용할 물품을 확보하는 활동입니다. 제3조제1호는 무기 구매·개발·성능개량과 관련 시설을, 제2호는 무기체계와 전력지원체계인 군수품을, 제5호는 구매·연구개발·생산을 통한 조달인 획득을 정합니다. 따라서 두 개념은 겹칠 수 있습니다. 제25조는 조달계획 수립과 방위사업청 일괄조달 원칙 및 각군·조달청을 통한 예외를 정합니다. 물품을 산다는 이유만으로 모든 조달을 방위력개선사업이라고 단정해서는 안 됩니다.",
+      "sources": [
+        {
+          "documentId": "290795",
+          "location": "제3조제1·2·5호, 제25조",
+          "url": "https://www.law.go.kr/DRF/lawService.do?target=law&MST=290795&type=HTML"
+        }
+      ],
+      "assessment": "정의·조달 조문에 근거한 비교; 양쪽 primary_evidence 및 조문 존재 확인",
+      "outcome": "supported",
+      "answerEvidence": {
+        "decision": "grounded",
+        "bodyCount": 1,
+        "comparisonTerms": ["방위력개선사업", "군수품"],
+        "comparisonCoverage": [
+          {
+            "term": "방위력개선사업",
+            "coverage": "primary_evidence",
+            "references": [
+              {
+                "documentId": "290795",
+                "article": "3",
+                "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=law&MST=290795&type=HTML",
+                "effectiveDate": "2026-10-02",
+                "excerpt": "제3조(정의) 이 법에서 사용하는 용어의 정의는 다음과 같다. <개정 2009.4.1, 2014.5.9, 2016.1.19, 2017.3.21, 2020.2.4, 2023.10.31>\n1. \"방위력개선사업\"이라 함은 군사력을 개선하기 위한 무기체계의 구매 및 신규개발ㆍ성능개량 등을 포함한 연구개발과 이에 수반되는 시설의 설치 등을 행하는 사업을 말한다.\n2. \"군수품\"이라 함은 국방부 및 그 직할부대ㆍ직할기관과 육ㆍ해ㆍ공군(이하 \"각군\"이라 한다)이 사용ㆍ관리하기 위하여 획득하는 물품으로서 무기체계 및 전력지원체계로 구분한다.\n3. \"무기체계\"라 함은 유도무기ㆍ항공기ㆍ함정 등 전장(戰場)에서 전투력을 발휘하기 위한 무기와 이를 운영하는데 필요한 장비ㆍ부품ㆍ시설ㆍ소프트웨어 등 제반요소를 통합한 것으로서 대통령령이 정하는 것을 말한다.\n4. \"전력지원체계\"라 함은 무기체계 외의 장비ㆍ부품ㆍ시설ㆍ소프트웨어 그 밖의 물품 등 제반요소를 말한다.\n5. \"획득\"이라 함은 군수품을 구매(임차를 포함한다. 이하 같다)하여 조달하거나 연구개발ㆍ생산하여 조달하는 것을 말한다.\n6. \"절충교역\"이라 함은 국외로부터 무기 또는 장비 등을 구매할 때 국외의 계약상대방으로부터 관련 지식 또는 기술 등을 이전받거나 국외로 국산무기ㆍ장비 또는 부품 등을 수출하는 등 일정한 반대급부를 제공받을 것을 조건으로 하는 교역을 말한다.\n7. \"방위산업물자\"라 함은 군수품 중 제34조의 규정에 의하여 지정된 물자를 말한다.\n8. \"방위산업\"이라 함은 「방위산업 발전 및 지원에 관한 법률」 제2조제2호에 따른 방위산업을 말한다.\n9. \"방위산업체\"라 함은 방위산업물자를 생산하는 업체로서 제35조의 규정에 의하여 지정된 업체를 말한다.\n9의2. \"일반업체\"란 방위산업과 관련된 업체로서 방위산업체가 아닌 업체를 말한다.\n9의3. \"방위산업과 관련없는 일반업체\"란 군수품을 납품하는 업체로서 방위산업체 또는 일반업체가 아닌 업체를 말한다.\n10. \"전문연구기관\"이라 함은 방위산업물자의 연구개발ㆍ시험ㆍ측정, 방위산업물자의 시험 등을 위한 기계ㆍ기구의 제작ㆍ검정, 방위산업체의 경영분석 또는 방위산업과 관련되는 소프트웨어의 개발을 위하여 방위사업청장의 위촉을 받은 기관을 말한다.\n10의2. \"일반연구기관\"이란 전문연구기관이 아닌 연구기관을 말한다.\n11. \"방위산업시설\"이라 함은 방위산업체 및 전문연구기관에서 방위산업물자의 연구개발 또는 생산에 제공하는 토지 및 ",
+                "truncated": true
+              }
+            ]
+          },
+          {
+            "term": "군수품",
+            "coverage": "primary_evidence",
+            "references": [
+              {
+                "documentId": "290795",
+                "article": "3",
+                "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=law&MST=290795&type=HTML",
+                "effectiveDate": "2026-10-02",
+                "excerpt": "제3조(정의) 이 법에서 사용하는 용어의 정의는 다음과 같다. <개정 2009.4.1, 2014.5.9, 2016.1.19, 2017.3.21, 2020.2.4, 2023.10.31>\n1. \"방위력개선사업\"이라 함은 군사력을 개선하기 위한 무기체계의 구매 및 신규개발ㆍ성능개량 등을 포함한 연구개발과 이에 수반되는 시설의 설치 등을 행하는 사업을 말한다.\n2. \"군수품\"이라 함은 국방부 및 그 직할부대ㆍ직할기관과 육ㆍ해ㆍ공군(이하 \"각군\"이라 한다)이 사용ㆍ관리하기 위하여 획득하는 물품으로서 무기체계 및 전력지원체계로 구분한다.\n3. \"무기체계\"라 함은 유도무기ㆍ항공기ㆍ함정 등 전장(戰場)에서 전투력을 발휘하기 위한 무기와 이를 운영하는데 필요한 장비ㆍ부품ㆍ시설ㆍ소프트웨어 등 제반요소를 통합한 것으로서 대통령령이 정하는 것을 말한다.\n4. \"전력지원체계\"라 함은 무기체계 외의 장비ㆍ부품ㆍ시설ㆍ소프트웨어 그 밖의 물품 등 제반요소를 말한다.\n5. \"획득\"이라 함은 군수품을 구매(임차를 포함한다. 이하 같다)하여 조달하거나 연구개발ㆍ생산하여 조달하는 것을 말한다.\n6. \"절충교역\"이라 함은 국외로부터 무기 또는 장비 등을 구매할 때 국외의 계약상대방으로부터 관련 지식 또는 기술 등을 이전받거나 국외로 국산무기ㆍ장비 또는 부품 등을 수출하는 등 일정한 반대급부를 제공받을 것을 조건으로 하는 교역을 말한다.\n7. \"방위산업물자\"라 함은 군수품 중 제34조의 규정에 의하여 지정된 물자를 말한다.\n8. \"방위산업\"이라 함은 「방위산업 발전 및 지원에 관한 법률」 제2조제2호에 따른 방위산업을 말한다.\n9. \"방위산업체\"라 함은 방위산업물자를 생산하는 업체로서 제35조의 규정에 의하여 지정된 업체를 말한다.\n9의2. \"일반업체\"란 방위산업과 관련된 업체로서 방위산업체가 아닌 업체를 말한다.\n9의3. \"방위산업과 관련없는 일반업체\"란 군수품을 납품하는 업체로서 방위산업체 또는 일반업체가 아닌 업체를 말한다.\n10. \"전문연구기관\"이라 함은 방위산업물자의 연구개발ㆍ시험ㆍ측정, 방위산업물자의 시험 등을 위한 기계ㆍ기구의 제작ㆍ검정, 방위산업체의 경영분석 또는 방위산업과 관련되는 소프트웨어의 개발을 위하여 방위사업청장의 위촉을 받은 기관을 말한다.\n10의2. \"일반연구기관\"이란 전문연구기관이 아닌 연구기관을 말한다.\n11. \"방위산업시설\"이라 함은 방위산업체 및 전문연구기관에서 방위산업물자의 연구개발 또는 생산에 제공하는 토지 및 ",
+                "truncated": true
+              }
+            ]
+          }
+        ],
+        "missingTerms": [],
+        "requiredContext": [],
+        "claimVerification": "not_performed"
+      },
+      "citationCheck": {
+        "results": [
+          {
+            "citation": "방위사업법 제3조",
+            "status": "VERIFIED",
+            "message": "문서명과 조문이 공식 본문에서 확인되었습니다",
+            "documentId": "290795",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=eflaw&MST=290795&type=HTML&mobileYn=&efYd=20261002",
+            "verificationScope": "article_location"
+          },
+          {
+            "citation": "방위사업법 제25조",
+            "status": "VERIFIED",
+            "message": "문서명과 조문이 공식 본문에서 확인되었습니다",
+            "documentId": "290795",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=eflaw&MST=290795&type=HTML&mobileYn=&efYd=20261002",
+            "verificationScope": "article_location"
+          }
+        ]
+      },
+      "sourceQuotes": [
+        "군수품을 구매(임차를 포함한다. 이하 같다)하여 조달하거나 연구개발ㆍ생산하여 조달하는 것을 말한다.",
+        "군수품은 국방예산의 효율적인 집행을 위하여 방위사업청에서 일괄적으로 조달한다."
+      ]
+    },
+    {
+      "id": 3,
+      "query": "사업추진기본전략은 무엇이며 어떤 내용을 포함해야 하나요?",
+      "types": ["administrative_rule"],
+      "startedAt": "2026-10-30T15:08:19.161Z",
+      "searchMs": 2018,
+      "toolMs": 2586,
+      "finishedAt": "2026-10-30T15:08:27.196Z",
+      "fullProcessingMs": 8035,
+      "answer": "사업추진기본전략은 사업을 어떤 방식으로 진행할지 정리하는 기본 계획입니다. 방위사업관리규정 제39조에 따라 통합사업관리팀장이 선행연구 결과와 관계기관 의견을 반영해 안을 만들고 위원회 또는 분과위원회 심의·조정을 거칩니다. 사업개요, 소요결정 사항, 선행조치 결과, 분과위 심의결과, 획득방안, 시험평가·품질·수명주기·위험관리 등 중점관리사항, 연구개발 단계 통합·생략 사항을 포함합니다. 필수 항목과 해당사업 조건이 다르므로 제39조와 별지 제5호서식을 확인하고, 신속소요사업은 제132조의 조정 규정도 확인해야 합니다. 이번에는 서식 자체를 상세 검증하지 않았습니다.",
+      "sources": [
+        {
+          "documentId": "2100000285480",
+          "location": "제39조·제132조",
+          "url": "https://www.law.go.kr/DRF/lawService.do?target=admrul&ID=2100000285480&type=HTML"
+        }
+      ],
+      "assessment": "주요 작성 항목·절차 확인; 서식 원문 검증 제외",
+      "outcome": "supported",
+      "answerEvidence": {
+        "decision": "grounded",
+        "bodyCount": 1,
+        "comparisonTerms": [],
+        "comparisonCoverage": [],
+        "missingTerms": [],
+        "requiredContext": [],
+        "claimVerification": "not_performed"
+      },
+      "citationCheck": {
+        "results": [
+          {
+            "citation": "방위사업관리규정 제39조",
+            "status": "VERIFIED",
+            "message": "문서명과 조문이 공식 본문에서 확인되었습니다",
+            "documentId": "2100000285480",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=admrul&ID=2100000285480&type=HTML&mobileYn=",
+            "verificationScope": "article_location"
+          }
+        ]
+      },
+      "sourceQuotes": [
+        "선행연구 결과 및 관련부서ㆍ기관의 검토의견을 반영하여",
+        "위원회 또는 분과위원회 심의ㆍ조정을 거쳐야 한다."
+      ]
+    },
+    {
+      "id": 4,
+      "query": "선행연구와 사업타당성조사는 어떻게 다른가요?",
+      "startedAt": "2026-10-30T15:08:27.197Z",
+      "searchMs": 2327,
+      "toolMs": 3245,
+      "finishedAt": "2026-10-30T15:08:36.579Z",
+      "fullProcessingMs": 9382,
+      "answer": "선행연구는 무기를 어떤 방법으로 확보할지 조사하는 절차입니다. 방위사업법 제17조제1항에 따라 소요결정 과정에서 개발 가능성, 시기·수량, 기술수준, 비용 대비 효과 등을 조사·분석합니다. 사업타당성조사는 제14조의2에 따라 대규모 신규사업의 예산 편성을 위해 사업 착수 전에 추진 타당성을 투명하고 공정하게 점검하는 절차입니다. 목적·대상·시점이 다르므로 선행연구를 했다고 사업타당성조사가 자동 면제되는 것은 아닙니다. 시행령 제21조의2의 규모 기준은 사업 종류에 따라 500억 원 또는 1,000억 원으로 나뉩니다. 실제 적용은 사업 분류와 부칙 적용례, 법률상 제외 요건을 함께 확인해야 합니다. 세부 위임 지침 전체는 이번 검증 범위가 아닙니다.",
+      "sources": [
+        {
+          "documentId": "290399",
+          "location": "제21조의2 및 부칙36648 제2조",
+          "url": "https://www.law.go.kr/DRF/lawService.do?target=law&MST=290399&type=HTML"
+        },
+        {
+          "documentId": "290795",
+          "location": "제14조의2·제17조",
+          "url": "https://www.law.go.kr/DRF/lawService.do?target=law&MST=290795&type=HTML"
+        },
+        {
+          "documentId": "2100000280268",
+          "location": "제2조·제5조",
+          "url": "https://www.law.go.kr/DRF/lawService.do?target=admrul&ID=2100000280268&type=HTML"
+        }
+      ],
+      "assessment": "양쪽 근거 조문·시행령 기준·지침 정의 확보 및 존재 확인",
+      "outcome": "supported",
+      "answerEvidence": {
+        "decision": "grounded",
+        "bodyCount": 4,
+        "comparisonTerms": ["사업타당성조사", "선행연구"],
+        "comparisonCoverage": [
+          {
+            "term": "사업타당성조사",
+            "coverage": "primary_evidence",
+            "references": [
+              {
+                "documentId": "290399",
+                "article": "21의2",
+                "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=law&MST=290399&type=HTML",
+                "effectiveDate": "2026-10-02",
+                "excerpt": "제21조의2(사업타당성조사) 법 제14조의2제1항 각 호 외의 부분에서 \"대통령령으로 정하는 대규모 신규사업\"이란 다음 각 호의 구분에 따른 신규사업을 말한다. <개정 2026.9.8>\n1. 법 제14조의2제1항제1호 및 제3호(「국방과학기술혁신 촉진법」 제2조제5호가목은 제외한다)에 따른 사업: 총사업비 500억원 이상\n2. 법 제14조의2제1항제2호 및 제3호(「국방과학기술혁신 촉진법」 제2조제5호가목만 해당한다)에 따른 사업: 총사업비 1,000억원 이상",
+                "truncated": false
+              },
+              {
+                "documentId": "290795",
+                "article": "14의2",
+                "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=law&MST=290795&type=HTML",
+                "effectiveDate": "2026-10-02",
+                "excerpt": "제14조의2(사업타당성조사)\n① 국방부장관 및 방위사업청장은 대통령령으로 정하는 대규모 신규사업으로서 다음 각 호의 어느 하나에 해당하는 사업에 대한 예산을 편성하기 위하여 사업 착수 이전에 사업 추진과 관련된 사항을 투명하고 공정하게 점검하는 사업타당성조사를 실시하여야 한다.\n1. 제3조제4호에 따른 전력지원체계사업\n2. 제19조에 따른 무기체계 구매사업\n3. 「국방과학기술혁신 촉진법」 제2조제5호에 따른 국방연구개발사업\n② 제1항에도 불구하고 국방부장관 및 방위사업청장은 다음 각 호의 어느 하나에 해당하는 사업을 기획예산처장관이 정하는 절차에 따라 사업타당성조사 대상에서 제외할 수 있다. <신설 2024.2.6, 2025.10.1>\n1. 국가안전보장과 관련되어 극도의 보안이 요구되는 사업\n2. 제17조제1항 단서에 따라 긴급한 무기체계 등의 소요가 결정된 사업으로서 전시, 사변, 해외파병, 적의 침투나 도발 또는 테러 등 긴급한 사정이 있는 사업\n3. 그 밖에 사업 추진 방법이나 예산 산정이 명백한 사업 등과 같이 사업타당성조사의 실익이 없다고 인정되는 사업\n③ 국방부장관 및 방위사업청장은 다음 각 호의 자를 수행기관으로 지정하여 제1항에 따른 사업타당성조사 관련 연구를 수행하게 하여야 한다. 다만, 효율적인 조사를 위하여 필요한 경우 국방부장관 및 방위사업청장은 기획예산처장관과 협의하여 수행기관을 변경하거나 추가로 지정할 수 있다. <개정 2024.2.6, 2025.10.1>\n1. 「한국국방연구원법」에 따라 설립된 한국국방연구원\n2. 「과학기술기본법」에 따른 한국과학기술기획평가원\n④ 국방부장관 및 방위사업청장은 제3항에 따른 연구수행을 위하여 수행기관과 협약을 체결하여 연구의 수행에 드는 비용을 예산의 범위에서 출연할 수 있다. <개정 2024.2.6>\n⑤ 제1항에 따른 사업타당성조사의 대상사업ㆍ선정기준ㆍ조사방법ㆍ절차 및 제3항에 따른 수행기관의 지정 등에 관한 사항은 기획예산처장관이 정한다. <개정 2024.2.6, 2025.10.1>",
+                "truncated": false
+              }
+            ]
+          },
+          {
+            "term": "선행연구",
+            "coverage": "primary_evidence",
+            "references": [
+              {
+                "documentId": "2100000280268",
+                "article": "2",
+                "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=admrul&ID=2100000280268&type=HTML",
+                "effectiveDate": "2026-07-01",
+                "excerpt": "제2조(용어정의) 이 지침에서 사용하는 용어의 뜻은 다음과 같다.1. \"선행연구\"란 「방위사업법」제17조제1항에 따라 방위력개선사업의 추진방법을 결정하기 위하여 방위사업청이 수행하는 획득단계를 말한다.2. \"선행연구 조사ㆍ분석\"이란 선행연구 단계에서 무기체계에 대한 연구개발 가능성, 소요시기 및 소요량의 적정성 판단, 국방과학기술수준, 기술적ㆍ경제적 타당성 분석, 비용 대 효과 분석 등에 대한 조사ㆍ분석 활동을 말한다.3. \"선행연구 수행기관\"이란 선행연구 조사ㆍ분석을 수행하는 방위사업청, 국방기술진흥연구소 등을 말한다.",
+                "truncated": false
+              },
+              {
+                "documentId": "2100000280268",
+                "article": "5",
+                "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=admrul&ID=2100000280268&type=HTML",
+                "effectiveDate": "2026-07-01",
+                "excerpt": "제5조(선행연구 기본원칙) ① 획득전략지원과장은「방위사업법」제17조제1항에 따라 방위력개선사업을 위한 무기체계 등의 소요결정 과정에서 선행연구를 수행한다. 다만, 다음 각 호 중 어느 하나에 해당하는 경우에는 선행연구를 수행하지 아니할 수 있다.1. 전시ㆍ사변ㆍ해외파병 등 방위력개선사업에 대한 긴급한 무기체계 등의 소요가 있는 경우2. 「방위사업법」제17조의2제1항에 따라 시범사업을 실시한 경우3. 「방위사업법」 제15조의2제1항 및 시행령 제22조의3에 따라 신속소요를 결정하기 위하여 사전개념연구를 실시하는 경우② 선행연구는「국방과학기술혁신 촉진법」에 근거하여 대상과제의 국내 연구개발 가능성과 그에 따른 최적 획득방안에 대하여 우선 검토되어야 하며, 국내 연구개발 사업은 업체주관 연구개발로 추진하는 것을 원칙으로 한다.③ 제2항에도 불구하고 국방과학연구소 주관 연구개발사업으로 검토할 경우 국방과학연구소의 사업 및 연구인력 투입여건을 고려하여 사업 착수시기를 판단하여야 한다.④ 획득전략지원과장은 선행연구를 수행함에 있어 전문적인 조사ㆍ분석이 필요하다고 판단되는 경우에는「국방과학기술혁신 촉진법」제16조제1항제6호에 따라 국기연에 선행연구와 관련된 조사ㆍ분석을 수행하게 할 수 있다. 이 경우 국기연이 직접 수행하는 것을 원칙으로 하되, 국기연 소장은 군 또는 민간 전문연구기관이 선행연구의 일부 또는 전부를 수행할 필요가 있다고 판단되는 경우에는 사전에 방위사업청장의 승인을 얻어야 한다.⑤ 획득전략지원과장은「방위사업법 시행규칙」제9조제2항에 따라 선행연구 시 필요한 경우 국방과학연구소, 방산업체등 또는 연구기관에 그 일부를 수행하게 할 수 있다.",
+                "truncated": false
+              }
+            ]
+          }
+        ],
+        "missingTerms": [],
+        "requiredContext": [],
+        "claimVerification": "not_performed"
+      },
+      "citationCheck": {
+        "results": [
+          {
+            "citation": "방위사업법 제14조의2",
+            "status": "VERIFIED",
+            "message": "문서명과 조문이 공식 본문에서 확인되었습니다",
+            "documentId": "290795",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=eflaw&MST=290795&type=HTML&mobileYn=&efYd=20261002",
+            "verificationScope": "article_location"
+          },
+          {
+            "citation": "방위사업법 제17조",
+            "status": "VERIFIED",
+            "message": "문서명과 조문이 공식 본문에서 확인되었습니다",
+            "documentId": "290795",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=eflaw&MST=290795&type=HTML&mobileYn=&efYd=20261002",
+            "verificationScope": "article_location"
+          },
+          {
+            "citation": "방위사업법 시행령 제21조의2",
+            "status": "VERIFIED",
+            "message": "문서명과 조문이 공식 본문에서 확인되었습니다",
+            "documentId": "290399",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=eflaw&MST=290399&type=HTML&mobileYn=&efYd=20261002",
+            "verificationScope": "article_location"
+          },
+          {
+            "citation": "선행연구 수행지침 제2조",
+            "status": "VERIFIED",
+            "message": "문서명과 조문이 공식 본문에서 확인되었습니다",
+            "documentId": "2100000280268",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=admrul&ID=2100000280268&type=HTML&mobileYn=",
+            "verificationScope": "article_location"
+          }
+        ]
+      },
+      "sourceQuotes": ["예산을 편성하기 위하여 사업 착수 이전에", "무기체계 등의 소요결정 과정에서"]
+    },
+    {
+      "id": 5,
+      "query": "방산물자 납품계약에서 지체상금이 문제 된 판례 사례를 알려줘",
+      "types": ["precedent"],
+      "startedAt": "2026-10-30T15:08:36.596Z",
+      "searchMs": 4908,
+      "toolMs": 7997,
+      "finishedAt": "2026-10-30T15:09:01.305Z",
+      "fullProcessingMs": 24709,
+      "answer": "방위사업청의 방산물자 계약에서 지체상금을 직접 판단한 원문은 이번 검색 범위에서 확보하지 못했습니다. 보충 사례로 대법원 1996.4.26. 선고 95다11436을 확인했습니다. 방위산업체 코리아타코마조선공업의 국가 상대 선박 건조계약에서 인도가 559일·424일 지연됐고, 지체상금 1,432,642,500원을 395,000,000원으로 감액한 원심을 대법원이 유지했습니다. 지체상금이 손해배상 예정액이면 부당하게 과다한 경우 감액할 수 있고, 과다 여부는 일일 비율만이 아니라 총액을 기준으로 판단한다는 내용입니다. 다만 원문은 해당 선박을 관급물자로, 별도의 방위산업물자 계약과 구분합니다. 현재 방위사업청 방산계약에 같은 감액·면제가 자동 적용된다고 말할 수 없습니다. 당시 법령과 사실관계에 관한 보충 판례로 사용하고, 실제 계약조건·현행 적용 규정·귀책사유를 추가 확인해야 합니다.",
+      "sources": [
+        {
+          "documentId": "198059",
+          "location": "95다11436, 이유1·2·3 및 주문",
+          "url": "https://www.law.go.kr/DRF/lawService.do?target=prec&ID=198059&type=HTML"
+        }
+      ],
+      "assessment": "실제 감액 판시·원문 전체 확인. 직접 DAPA 방산물자 판례는 미확보. 자동 사건번호 검증은 중복 후보로 AMBIGUOUS; 상세 ID198059의 사건번호·법원·선고일·주문 수동 대조.",
+      "outcome": "limited_supplement",
+      "answerEvidence": {
+        "decision": "partial",
+        "bodyCount": 5,
+        "comparisonTerms": [],
+        "comparisonCoverage": [],
+        "missingTerms": ["지체상금 판단과 방위사업 사실관계의 직접 연관성"],
+        "requiredContext": ["지체상금", "방위사업 관련 사실관계"],
+        "claimVerification": "not_performed"
+      },
+      "citationCheck": {
+        "results": [
+          {
+            "citation": "대법원 95다11436",
+            "status": "AMBIGUOUS",
+            "message": "동일 사건번호 후보가 여러 건입니다"
+          }
+        ]
+      },
+      "sourceQuotes": [
+        "지체상금은 손해배상의 예정으로 봄이 상당하다.",
+        "지체상금 총액을 기준으로 하여 판단하여야 한다.",
+        "관급물자인 이 사건 선박들 건조계약"
+      ]
+    },
+    {
+      "id": 6,
+      "query": "완제품 규격이 미달하면 방위사업청이 바로 입찰참가자격을 제한할 수 있나요?",
+      "types": ["precedent"],
+      "startedAt": "2026-10-30T15:09:01.306Z",
+      "searchMs": 1168,
+      "toolMs": 2203,
+      "finishedAt": "2026-10-30T15:09:08.321Z",
+      "fullProcessingMs": 7015,
+      "answer": "완제품 규격 미달만으로 곧바로 '부정한 제조'라고 단정할 수는 없습니다. 대법원 2024.6.27. 선고 2024두32393은 방위사업청 운동복 납품 사건에서 정상 원단도 제조공정 중 품질이 저하될 수 있으므로 완제품 시험결과만으로 저품질 원단 사용 등 부정한 제조가 증명됐다고 보기 어렵다고 판단해 파기환송했습니다. 다만 모든 품질 미달에 제재가 불가능하다는 뜻은 아닙니다. 실제 적용 조항과 행위·증거를 구분해 검토해야 합니다. 파기환송 뒤 최종 결과와 현재 개별 처분의 적법성은 이번 조회에서 확인하지 않았습니다.",
+      "sources": [
+        {
+          "documentId": "240941",
+          "location": "2024두32393, 판결요지[2]·이유3·주문",
+          "url": "https://www.law.go.kr/DRF/lawService.do?target=prec&ID=240941&type=HTML"
+        }
+      ],
+      "assessment": "직접 방위사업청 사건의 사실·판시·파기환송 주문 및 사건번호 존재 확인",
+      "outcome": "supported",
+      "answerEvidence": {
+        "decision": "grounded",
+        "bodyCount": 2,
+        "comparisonTerms": [],
+        "comparisonCoverage": [],
+        "missingTerms": [],
+        "requiredContext": ["입찰참가자격 제한", "방위사업 관련 사실관계"],
+        "claimVerification": "not_performed"
+      },
+      "citationCheck": {
+        "results": [
+          {
+            "citation": "대법원 2024두32393",
+            "status": "VERIFIED",
+            "message": "사건번호 존재를 확인했습니다. 판결 내용과 답변 주장의 일치 여부는 별도 본문 검토가 필요합니다",
+            "documentId": "240941",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=prec&ID=240941&type=HTML&mobileYn=",
+            "verificationScope": "case_identity"
+          }
+        ]
+      },
+      "sourceQuotes": [
+        "계약이행의 결과에 객관적 하자가 있다는 것만으로는",
+        "원심판결을 파기하고, 사건을 서울고등법원에 환송한다."
+      ]
+    },
+    {
+      "id": 7,
+      "query": "경기도 방위산업 육성 및 지원에 관한 조례에서 기업에 어떤 지원을 할 수 있나요?",
+      "types": ["local_ordinance"],
+      "startedAt": "2026-10-30T15:09:13.985Z",
+      "searchMs": 1359,
+      "toolMs": 2996,
+      "finishedAt": "2026-10-30T15:09:22.986Z",
+      "fullProcessingMs": 9001,
+      "answer": "경기도 조례 제5조는 국방 중소·벤처기업 육성, 방위산업체 기술개발·사업화, 인력양성·창업, 연구기관·기업 유치, 국내외 시장진출·마케팅, 협력체계와 방산혁신클러스터 사업 등을 정합니다. 제6조는 관련 기관·법인·단체 등의 연구개발, 판로·마케팅, 공동 기술개발 등 사업에 예산 범위에서 사업비를 보조할 수 있도록 합니다. 기업이면 자동으로 지원금을 받는다는 뜻은 아닙니다. 실제 대상과 선정·보조 절차는 사업 공고와 경기도 지방보조금 관리 조례를 추가 확인해야 합니다. 이번 조회의 조례 상태는 unknown이므로 현행성까지 확정했다고 표현하지 않습니다.",
+      "sources": [
+        {
+          "documentId": "2151127",
+          "location": "제5조·제6조",
+          "url": "https://www.law.go.kr/DRF/lawService.do?target=ordin&MST=2151127&type=HTML"
+        }
+      ],
+      "assessment": "누락 지원조항 상세조회·존재 확인; 조회본 시행일2026-07-14, 상태unknown",
+      "outcome": "supported",
+      "answerEvidence": {
+        "decision": "grounded",
+        "bodyCount": 1,
+        "comparisonTerms": [],
+        "comparisonCoverage": [],
+        "missingTerms": [],
+        "requiredContext": [],
+        "claimVerification": "not_performed"
+      },
+      "citationCheck": {
+        "results": [
+          {
+            "citation": "경기도 방위산업 육성 및 지원에 관한 조례 제5조",
+            "status": "VERIFIED",
+            "message": "문서명과 조문이 공식 본문에서 확인되었습니다",
+            "documentId": "2151127",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=ordin&MST=2151127&type=HTML&mobileYn=",
+            "verificationScope": "article_location"
+          },
+          {
+            "citation": "경기도 방위산업 육성 및 지원에 관한 조례 제6조",
+            "status": "VERIFIED",
+            "message": "문서명과 조문이 공식 본문에서 확인되었습니다",
+            "documentId": "2151127",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=ordin&MST=2151127&type=HTML&mobileYn=",
+            "verificationScope": "article_location"
+          }
+        ]
+      },
+      "sourceQuotes": [
+        "예산의 범위에서 사업비를 보조할 수 있다.",
+        "그 절차, 기준 및 방법 등에 관하여는 「경기도 지방보조금 관리 조례」를 따른다."
+      ]
+    },
+    {
+      "id": 8,
+      "query": "가평군 드론산업 육성 및 지원 조례의 지원 대상과 사업을 알려줘",
+      "types": ["local_ordinance"],
+      "startedAt": "2026-10-30T15:09:22.987Z",
+      "searchMs": 1546,
+      "toolMs": 3158,
+      "finishedAt": "2026-10-30T15:09:32.639Z",
+      "fullProcessingMs": 9652,
+      "answer": "제5조는 드론 전문인력 양성, 전시회·경진대회, 시설 설치, 창업·운영 지원, 드론을 활용한 공공서비스와 이용 촉진 등을 정합니다. 제7조의 경비지원 대상은 제5조 및 제8조의 사업을 수행하는 기관·법인·단체이며 예산 범위에서 지원할 수 있습니다. 제8조는 군민 대상 체험·교육입니다. 드론을 보유했다는 이유만으로 지원받는 것은 아니고, 실제 지원 절차는 가평군 지방보조금 관리 조례와 공고를 확인해야 합니다. 이는 가평군 지역 지원 근거이며 방위사업청 계약 규정과 구분해야 합니다. 조회본 시행일은2020-12-23이고 상태unknown이므로 현행성 확정은 별도 확인이 필요합니다.",
+      "sources": [
+        {
+          "documentId": "1556259",
+          "location": "제5조·제7조·제8조",
+          "url": "https://www.law.go.kr/DRF/lawService.do?target=ordin&MST=1556259&type=HTML"
+        }
+      ],
+      "assessment": "지원대상·사업·예산 조건 원문과 조문 존재 확인; 현행성unknown명시",
+      "outcome": "supported",
+      "answerEvidence": {
+        "decision": "grounded",
+        "bodyCount": 1,
+        "comparisonTerms": [],
+        "comparisonCoverage": [],
+        "missingTerms": [],
+        "requiredContext": [],
+        "claimVerification": "not_performed"
+      },
+      "citationCheck": {
+        "results": [
+          {
+            "citation": "가평군 드론산업 육성 및 지원 조례 제5조",
+            "status": "VERIFIED",
+            "message": "문서명과 조문이 공식 본문에서 확인되었습니다",
+            "documentId": "1556259",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=ordin&MST=1556259&type=HTML&mobileYn=",
+            "verificationScope": "article_location"
+          },
+          {
+            "citation": "가평군 드론산업 육성 및 지원 조례 제7조",
+            "status": "VERIFIED",
+            "message": "문서명과 조문이 공식 본문에서 확인되었습니다",
+            "documentId": "1556259",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=ordin&MST=1556259&type=HTML&mobileYn=",
+            "verificationScope": "article_location"
+          }
+        ]
+      },
+      "sourceQuotes": [
+        "제5조 및 제8조에 따른 사업을 수행하는 기관·법인 또는 단체에게",
+        "예산의 범위에서 필요한 경비를 지원할 수 있다."
+      ]
+    },
+    {
+      "id": 9,
+      "query": "군사기밀보호법과 국민의 알 권리가 충돌한 헌재 사례를 알려줘",
+      "types": ["constitutional_case"],
+      "startedAt": "2026-10-30T15:09:32.641Z",
+      "searchMs": 1740,
+      "toolMs": 2551,
+      "finishedAt": "2026-10-30T15:09:43.604Z",
+      "fullProcessingMs": 10963,
+      "answer": "헌재 1992.2.25. 89헌가104는 군사기밀 보호와 국민의 알 권리·표현의 자유가 충돌하는 문제를 다뤘습니다. 군사기밀 범위를 필요한 최소한도로 해석하고, 비공개 사실로 적법한 기밀 표지를 갖추며 누설이 국가안전에 명백한 위험을 초래할 만큼 실질적 가치가 있는 경우에 해당 조항을 적용한다는 한정된 해석 아래 위헌이 아니라고 판단했습니다. 원문에 함께 실린 전부위헌·단순합헌 의견을 결정의 주문과 혼동하면 안 됩니다. 과거 법률에 대한 결정이므로 현재 직원이 가진 특정 자료를 공개해도 된다는 결론은 별도 검토가 필요합니다.",
+      "sources": [
+        {
+          "documentId": "134854",
+          "location": "89헌가104, 결정요지1다·2나",
+          "url": "https://www.law.go.kr/DRF/lawService.do?target=detc&ID=134854&type=HTML"
+        }
+      ],
+      "assessment": "사건번호 존재 및 결정요지·별개의견 구분 확인; 현행 개별 공개 판단 제외",
+      "outcome": "supported",
+      "answerEvidence": {
+        "decision": "grounded",
+        "bodyCount": 1,
+        "comparisonTerms": [],
+        "comparisonCoverage": [],
+        "missingTerms": [],
+        "requiredContext": ["군사기밀"],
+        "claimVerification": "not_performed"
+      },
+      "citationCheck": {
+        "results": [
+          {
+            "citation": "헌법재판소 89헌가104",
+            "status": "VERIFIED",
+            "message": "사건번호 존재를 확인했습니다. 판결 내용과 답변 주장의 일치 여부는 별도 본문 검토가 필요합니다",
+            "documentId": "134854",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=detc&ID=134854&type=HTML&mobileYn=",
+            "verificationScope": "case_identity"
+          }
+        ]
+      },
+      "sourceQuotes": ["군사기밀(軍事機密)의 범위는", "필요한 최소한도에 한정되어야 할 것이며"]
+    },
+    {
+      "id": 10,
+      "query": "입찰참가자격 제한이 직업의 자유를 침해하는지 판단한 헌재 사례가 있나요?",
+      "types": ["constitutional_case"],
+      "startedAt": "2026-10-30T15:09:43.606Z",
+      "searchMs": 2457,
+      "toolMs": 3775,
+      "finishedAt": "2026-10-30T15:09:52.260Z",
+      "fullProcessingMs": 8654,
+      "answer": "헌재 2016.6.30. 2015헌바125가 있습니다. 구 국가계약법 제27조제1항의 입찰참가자격 제한에 대해, 국가계약의 공정성과 충실한 이행을 확보할 필요가 있고 제한 중에도 민간시장 영업은 가능하며 최대 2년 범위에서 행위와 책임에 따라 기간을 정한다는 점 등을 들어 직업의 자유를 침해하지 않는다고 판단했습니다. 당시 법률조항에 대한 판단이므로 현재 특정 업체의 제재가 모두 적법하다는 뜻은 아닙니다. 현행 규정과 처분사유·증거·기간은 따로 검토해야 합니다. 함께 검색된 공기업 사건은 방위사업청 직접 사건과 구분해야 합니다.",
+      "sources": [
+        {
+          "documentId": "50533",
+          "location": "2015헌바125, 결정요지나",
+          "url": "https://www.law.go.kr/DRF/lawService.do?target=detc&ID=50533&type=HTML"
+        }
+      ],
+      "assessment": "국가계약법 관련 결정요지 및 사건번호 존재 확인; 개별 현행 처분 적법성 제외",
+      "outcome": "supported",
+      "answerEvidence": {
+        "decision": "grounded",
+        "bodyCount": 5,
+        "comparisonTerms": [],
+        "comparisonCoverage": [],
+        "missingTerms": [],
+        "requiredContext": ["입찰참가자격 제한", "직업의 자유"],
+        "claimVerification": "not_performed"
+      },
+      "citationCheck": {
+        "results": [
+          {
+            "citation": "헌법재판소 2015헌바125",
+            "status": "VERIFIED",
+            "message": "사건번호 존재를 확인했습니다. 판결 내용과 답변 주장의 일치 여부는 별도 본문 검토가 필요합니다",
+            "documentId": "50533",
+            "sourceUrl": "https://www.law.go.kr/DRF/lawService.do?target=detc&ID=50533&type=HTML&mobileYn=",
+            "verificationScope": "case_identity"
+          }
+        ]
+      },
+      "sourceQuotes": [
+        "민간시장에서 영업활동을 할 수 있고",
+        "청구인들의 직업의 자유를 침해한다고 볼 수 없다."
+      ]
+    }
+  ]
+}
