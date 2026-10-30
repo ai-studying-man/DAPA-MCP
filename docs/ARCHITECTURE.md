@@ -53,6 +53,10 @@ Tool Registry (Zod boundary)
 명시적 업스트림 장애 분류다. 원본은 MIT이지만 이 저장소는 코드를 복사하지 않고
 별도 구현한다.
 
+2026-10-30에는 업스트림 4.15.14 (`69de3b61ad680604cd88802e2904e238dd162dcc`)까지
+101개 추가 커밋을 검토했다. 적용·유지·보류 항목과 검증은
+[업스트림 검토 기록](upstream-review-2026-10-30.md)에 남긴다.
+
 ## 공식 API
 
 - 목록: `https://www.law.go.kr/DRF/lawSearch.do`
