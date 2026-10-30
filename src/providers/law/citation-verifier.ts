@@ -113,6 +113,9 @@ export class CitationVerifier {
     const search = await this.lawProvider.search({
       query: citation.caseNumber ?? citation.raw,
       types: [citation.documentName === "헌법재판소" ? "constitutional_case" : "precedent"],
+      ...(citation.documentName === "헌법재판소" || citation.caseNumber === undefined
+        ? {}
+        : { caseNumber: citation.caseNumber }),
       limit: 20,
     })
     if (search.status === "NOT_FOUND")

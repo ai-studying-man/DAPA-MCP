@@ -133,5 +133,6 @@ export type ListPageCoverage = {
 export type SearchPageCoverage = ListPageCoverage & {
   readonly sourceType: SourceType
   readonly query?: string
-  readonly searchScope?: "title" | "content"
+  readonly searchScope?: "title" | "content" | "case_number"
+  readonly caseNumber?: string
 }

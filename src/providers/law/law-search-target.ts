@@ -1,3 +1,4 @@
+import { parseCitation } from "../../lib/citation/parser.js"
 import type { DapaSearchResult, SearchPageCoverage } from "../../types/results.js"
 import { koreaToday } from "./law-api-temporal.js"
 import { measureLawParse } from "./law-performance.js"
@@ -24,6 +25,11 @@ export async function searchLawTarget(
   access: LawSearchAccess,
 ): Promise<LawSearchPage> {
   const resolvedTarget = target.sourceType === "law" ? { ...target, target: "eflaw" } : target
+  const inferredCitation = parseCitation(`대법원 ${input.query.trim()}`)
+  const caseNumber =
+    target.sourceType === "precedent"
+      ? (input.caseNumber?.replace(/\s+/gu, "") ?? inferredCitation.caseNumber)
+      : undefined
   const display = Math.min(
     input.organization === undefined ? Math.max(input.limit ?? 10, 20) : 100,
     100,
@@ -37,6 +43,7 @@ export async function searchLawTarget(
     input.organization ?? "",
     input.asOfDate ?? "",
     input.searchScope ?? "title",
+    caseNumber ?? "",
     page,
     koreaToday(),
   ])
@@ -46,7 +53,7 @@ export async function searchLawTarget(
         OC: access.apiKey,
         target: resolvedTarget.target,
         type: "JSON",
-        query: input.query,
+        ...(caseNumber === undefined ? { query: input.query } : { nb: caseNumber }),
         display: String(display),
         page: String(page),
         ...(input.searchScope === "content" ? { search: "2" } : {}),
@@ -68,7 +75,8 @@ export async function searchLawTarget(
       coverage: {
         sourceType: target.sourceType,
         query: input.query,
-        searchScope: input.searchScope ?? "title",
+        searchScope: caseNumber === undefined ? (input.searchScope ?? "title") : "case_number",
+        ...(caseNumber === undefined ? {} : { caseNumber }),
         page,
         pageSize: display,
         totalCount: parsed.totalCount,

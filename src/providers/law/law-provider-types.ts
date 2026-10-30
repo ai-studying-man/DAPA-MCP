@@ -10,6 +10,7 @@ export type LegalSearchInput = {
   readonly limit?: number
   readonly page?: number
   readonly searchScope?: "title" | "content"
+  readonly caseNumber?: string
   readonly deadlineAt?: number
 }
 
