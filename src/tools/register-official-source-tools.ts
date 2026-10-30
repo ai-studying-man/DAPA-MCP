@@ -38,7 +38,7 @@ export function registerOfficialSourceTools(
     {
       title: "공식 공시의 사건 사실관계 대조",
       description:
-        "한국거래소 KIND 원문 URL과 사건번호로 해당 공시 문맥을 읽습니다. 회사 공시는 법원의 사실인정·판시와 구분해야 합니다. 임의 웹 주소는 허용하지 않습니다.",
+        "한국거래소 KIND 또는 금융감독원 DART 원문 URL과 사건번호로 해당 공시 문맥을 읽습니다. 회사 공시는 법원의 사실인정·판시와 구분해야 합니다. 임의 웹 주소는 허용하지 않습니다.",
       inputSchema: { url: z.url(), caseNumber: CaseNumberSchema },
       annotations: READ_ONLY_ANNOTATIONS,
     },

@@ -6,17 +6,31 @@ import { toErrorShape } from "./law/law-provider-response.js"
 
 export function validateDisclosureUrl(value: string): URL {
   const url = new URL(value)
+  const kind =
+    url.hostname === "kind.krx.co.kr" &&
+    url.search === "" &&
+    /^\/external\/\d{4}\/\d{2}\/\d{2}\/\d{6}\/\d{14}\/\d+\.htm$/u.test(url.pathname)
+  const keys = ["rcpNo", "dcmNo", "eleId", "offset", "length", "dtd"]
+  const dart =
+    url.hostname === "dart.fss.or.kr" &&
+    url.pathname === "/report/viewer.do" &&
+    [...url.searchParams.keys()].length === keys.length &&
+    keys.every((key) => url.searchParams.getAll(key).length === 1) &&
+    /^\d{14}$/u.test(url.searchParams.get("rcpNo") ?? "") &&
+    ["dcmNo", "eleId", "offset", "length"].every((key) =>
+      /^\d{1,10}$/u.test(url.searchParams.get(key) ?? ""),
+    ) &&
+    url.searchParams.get("dtd") === "dart3.xsd" &&
+    Number(url.searchParams.get("length")) <= 12 * 1024 * 1024
   if (
     url.protocol !== "https:" ||
-    url.hostname !== "kind.krx.co.kr" ||
     url.port !== "" ||
     url.username !== "" ||
     url.password !== "" ||
-    url.search !== "" ||
     url.hash !== "" ||
-    !/^\/external\/\d{4}\/\d{2}\/\d{2}\/\d{6}\/\d{14}\/\d+\.htm$/u.test(url.pathname)
+    (!kind && !dart)
   ) {
-    throw new DapaError("INVALID_ARGUMENT", "한국거래소 KIND 공식 공시 원문 주소만 지원합니다")
+    throw new DapaError("INVALID_ARGUMENT", "KIND 또는 DART 공식 공시 원문 주소만 지원합니다")
   }
   return url
 }
