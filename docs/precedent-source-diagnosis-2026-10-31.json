@@ -1,0 +1,306 @@
+{
+  "testedAt": "2026-10-30T15:45:26.617Z",
+  "codeRevision": "de94a46aa6f57faae3e3c434fe7724f76c751070",
+  "measurement": "MCP retrieval only; excludes model answer generation and UI render",
+  "passed": true,
+  "lawApiExact": {
+    "testedAt": "2026-10-30T15:36:14.361Z",
+    "guide": "https://open.law.go.kr/LSO/openApi/guideResult.do?htmlName=precListGuide",
+    "scope": "exact nb lookup in currently exposed public API, not proof of internal corpus absence",
+    "records": [
+      {
+        "request": {
+          "target": "prec",
+          "type": "JSON",
+          "nb": "2024다272736",
+          "display": 100
+        },
+        "httpStatus": 200,
+        "totalCount": 0,
+        "cases": []
+      },
+      {
+        "request": {
+          "target": "prec",
+          "type": "JSON",
+          "nb": "2023나2038708",
+          "display": 100
+        },
+        "httpStatus": 200,
+        "totalCount": 0,
+        "cases": []
+      },
+      {
+        "request": {
+          "target": "prec",
+          "type": "JSON",
+          "nb": "2022가합534725",
+          "display": 100
+        },
+        "httpStatus": 200,
+        "totalCount": 0,
+        "cases": []
+      },
+      {
+        "request": {
+          "target": "prec",
+          "type": "JSON",
+          "nb": "2024두32393",
+          "display": 100
+        },
+        "httpStatus": 200,
+        "totalCount": 1,
+        "cases": [
+          {
+            "documentId": "240941",
+            "caseNumber": "2024두32393",
+            "court": "대법원",
+            "title": "입찰참가자격제한처분취소[국가계약법 제27조 제1항 제1호의 ‘계약을 이행할 때에 부정한 행위를 한 자’에 해당하는지 여부가 문제된 사건]"
+          }
+        ]
+      },
+      {
+        "request": {
+          "target": "prec",
+          "type": "JSON",
+          "nb": "95다11436",
+          "display": 100
+        },
+        "httpStatus": 200,
+        "totalCount": 2,
+        "cases": [
+          {
+            "documentId": "198059",
+            "caseNumber": "95다11436",
+            "court": "대법원",
+            "title": "채무부존재확인"
+          },
+          {
+            "documentId": "621815",
+            "caseNumber": "95다11436",
+            "court": "대법원",
+            "title": "채무부존재확인"
+          }
+        ]
+      }
+    ]
+  },
+  "courtOriginal": {
+    "document": "court:2:6159:1780984794143_145954.pdf",
+    "caseNumber": "2024다272736",
+    "sourceUrl": "https://www.scourt.go.kr/portal/news/NewsViewAction.work?gubun=2&seqnum=6159",
+    "attachmentUrl": "https://file.scourt.go.kr/AttachDownload?file=1780984794143_145954.pdf&path=001&downFile=2024%EB%8B%A4272736_%ED%8C%90%EA%B2%B0%EB%AC%B8.pdf",
+    "sha256": "c0c9c09530b76b694f8a4254fe533c12849bd8bee5f518bf909d996042a20507",
+    "pageCount": 4,
+    "truncated": false,
+    "body": "### 대\t법\t원\n\n### 제\t3\t부\n\n<table>\n<tr><th></th><th></th><th>판</th><th>결</th></tr>\n<tr><td>사</td><td>2024다272736</td><td>물품대금</td><td>건</td></tr>\n<tr><td>원고, 피상고인</td><td></td><td></td><td>주식회사 A의 소송수계인 주식회사 B의 소송수계인 C 주식회사</td></tr>\n<tr><td colspan=\"4\">소송대리인 법무법인(유한) 화우</td></tr>\n<tr><td colspan=\"4\">담당변호사 정진수, 박근배, 김근호, 김지성</td></tr>\n<tr><td>피고, 상고인</td><td>대한민국</td><td></td><td></td></tr>\n<tr><td>원심판결</td><td></td><td></td><td>서울고등법원 2024. 7. 3. 선고 2023나2038708 판결</td></tr>\n<tr><td>판결선고</td><td>2026.4.30.</td><td></td><td></td></tr>\n<tr><td></td><td></td><td>주</td><td>문</td></tr>\n<tr><td colspan=\"4\">원심판결의 피고 패소 부분 중 지연손해금 청구 부분을 파기하고, 이 부분 사건을 서</td></tr>\n<tr><td colspan=\"4\">울중앙지방법원에 환송한다.</td></tr>\n<tr><td colspan=\"4\">나머지 상고를 기각한다.</td></tr>\n<tr><td></td><td></td><td>이</td><td>유</td></tr>\n<tr><td colspan=\"4\">상고이유를 판단한다.</td></tr>\n<tr><td colspan=\"4\">1. 제1상고이유에 관한 판단(지체상금 감액에 대한 법리오해 주장에 관한 판단)</td></tr>\n<tr><td colspan=\"4\">-1-</td></tr>\n</table>\n\n![image](image_001.png)\n\n![image](image_002.png)\n\n지체상금이 당사자의 지위, 계약 목적과 내용, 지체상금을 예정한 동기, 공사도급액에 대한 지체상금 비율, 지체상금 액수, 지체 사유, 그 당시 거래관행 등 여러 사정에 비추어 부당히 과다하다고 인정되는 경우에는 법원이 이를 감액할 수 있다(대법원 1999. 3.\n\n26. 선고 96다23306 판결 등 참조). 이때 감액사유에 대한 사실인정이나 그 비율을 정하는 것은 형평 원칙에 비추어 현저히 불합리하다고 인정되지 않는 한 사실심 법원의 전권에 속하는 사항이다(대법원 2005. 11. 25. 선고 2003다60136 판결 등 참조).\n\n원심은 이 사건 작업중지명령에 이르게 된 경위와 기간 등 제반 사정을 고려하여 원고가 부담해야 할 지체상금 중 20%를 감액하였다. 원심판결 이유를 관련 법리에 비추어 보면, 원심이 인정한 지체상금 감액 비율이 형평 원칙에 비추어 현저히 불합리하다고 보기 어렵다. 원심 판단에 지체상금 감액에 관한 법리를 오해한 잘못이 없다.\n\n2. 제2상고이유 주장에 관한 판단(지연손해금률 주장에 관한 판단)\n\n금전채무 불이행으로 인한 손해배상액은 특별한 사정이 없는 한 민법 또는 상법이 정한 법정이율로 계산한 돈이다. 다만 그와 다른 이자율 약정이 있거나 지연손해금률 약정이 있는 경우 그 별도 약정에 따른 손해배상액을 인정할 수 있다. 이는 그 지연손해금률이 법정이율보다 낮다 하더라도 마찬가지이다. 이와 같이 별도 약정이 있음을 이유로 법정이율보다 낮은 비율로 계산한 지연손해금을 인정하기 위해서는 법정이율보다 낮은 이자율 또는 지연손해금률 약정에 관하여 당사자 사이에 다툼이 없거나 증거에 의하여 적극적으로 인정되는 사정이 존재하여야 한다(대법원 1995. 10. 12. 선고 95 다26797 판결, 대법원 2013. 4. 26. 선고 2011다50509 판결 등 참조).\n\n기록에 의하면, 이 사건 계약 특수조건 제9조 제1항은 ‘계약담당공무원은 ｢국가를 당사자로 하는 계약에 관한 법률 시행령｣(이하 ’국가계약법 시행령‘이라 한다) 제58조, 제\n\n![image](image_003.png)\n\n59조에 따라 대가 및 대가지급 지연에 대한 이자를 지급한다.’고 정하고 있다. 국가계약법 시행령 제59조는 ‘법 제15조 제2항의 규정에 의하여 각 중앙관서의 장 또는 계약담당공무원이 대금지급청구를 받은 경우에 제58조의 규정에 의한 대가지급기한까지 대가를 지급하지 못하는 경우에는 지급기한의 다음날부터 지급하는 날까지의 일수에 대해 당해 미지급금액 및 지연발생 시점의 금융기관 대출평균금리(한국은행 통계월보상의 대출평균금리를 말한다)를 곱하여 산출한 금액을 이자로 지급하여야 한다.’고 규정하고 있다.\n\n이러한 사실관계를 관련 법리에 비추어 보면, 이 사건에서는 지연손해금률에 관한 약정이 있으므로, 이 사건 계약상 물품대금 지급 지연에 대해 법정이율이 아닌 금융기관 대출평균금리가 적용되어야 한다.\n\n이 사건 계약상 물품대금 지급에 따른 지연손해금률로 상법이 정한 연 6% 비율이 적용되어야 한다고 본 원심 판단에는 지연손해금 약정의 해석과 이행지체 후 가산할 지연손해금의 비율 등에 관한 법리를 오해하여 판결에 영향을 미친 위법이 있다.\n\n3. 결론\n\n원심판결의 피고 패소 부분 중 지연손해금 청구 부분을 파기하고, 이 부분 사건을 다시 심리․판단하도록 원심 법원에 환송하며, 나머지 상고를 기각하기로 하여, 관여 대법관의 일치된 의견으로 주문과 같이 판결한다.\n\n재판장\t대법관\n\n이흥구\n\n![image](image_004.png)\n\n<table>\n<tr><th>대법관</th><th>오석준</th></tr>\n<tr><td>주 심 대법관 노경필</td><td></td></tr>\n<tr><td>대법관</td><td>이숙연</td></tr>\n<tr><td colspan=\"2\">-4-</td></tr>\n</table>\n\n![image](image_005.png)"
+  },
+  "sourceLink": {
+    "supremeCase": "2024다272736",
+    "lowerCase": "2023나2038708",
+    "courtPartyContext": "anonymized; not independently named as DAPA in judgment",
+    "issuer": {
+      "status": "OK",
+      "evidenceKind": "issuer_disclosure",
+      "partyContext": "issuer_statement_only",
+      "claimVerification": "not_performed",
+      "caseNumber": "2023나2038708",
+      "excerpts": [
+        "0) 물품대금청구소송 (서울고등법원 2023나2038708) 구분 내용 소 제기일 2022.06.16 (1심) 소송 당사자 원고 : 한화에어로스페이스, 피고 : 대한민국 소송의 내용 대전사업장에서 '19.02.14. 발생한 폭발사고로 인하여 당사가 납품을 지체하였고, 이에 대하여 방위사업청은 당사에게 지체상금을 부과하였는데, 지체상금의 감액을 위하여 당사가 방위사업청을 상대로 물품대금의 지급을 청구하는 소송을 제기한 사건 소송가액 79억 진행상황 2023.7.19. 1심 판결 선고 (원고일부승)2023.08."
+      ],
+      "originalCharacters": 14077,
+      "truncated": true,
+      "sourceUrl": "https://dart.fss.or.kr/report/viewer.do?rcpNo=20240214002102&dcmNo=9618945&eleId=67&offset=7925427&length=97985&dtd=dart3.xsd",
+      "retrievedAt": "2026-10-30T15:45:37.470Z",
+      "sha256": "04ffa07a17177c4b196c04f02122e911a58573399a1c4429db65e9d74257928b",
+      "errors": []
+    }
+  },
+  "searchAnswerEvidence": {
+    "decision": "partial",
+    "bodyCount": 6,
+    "comparisonTerms": [],
+    "comparisonCoverage": [],
+    "missingTerms": ["지체상금 판단과 방위사업 사실관계의 직접 연관성"],
+    "requiredContext": ["지체상금", "방위사업 관련 사실관계"],
+    "claimVerification": "not_performed"
+  },
+  "officialCourtDiagnostics": {
+    "status": "OK",
+    "originalBodies": 1,
+    "scope": "bounded_published_court_notices",
+    "partyContextVerification": "not_performed",
+    "lawApiExactLookups": [
+      {
+        "caseNumber": "2024다272736",
+        "status": "NOT_FOUND",
+        "matches": 0,
+        "scope": "exact_docket_in_public_law_api",
+        "errors": []
+      }
+    ],
+    "errors": []
+  },
+  "calls": [
+    {
+      "name": "search_legal_content",
+      "args": {
+        "query": "방산물자 납품계약에서 지체상금이 문제 된 판례 사례를 알려줘",
+        "types": ["precedent"],
+        "mode": "fast",
+        "limit": 5,
+        "forceRefresh": true
+      },
+      "status": "OK",
+      "elapsedMs": 4662,
+      "errors": []
+    },
+    {
+      "name": "get_legal_detail",
+      "args": {
+        "documentId": "court:2:6159:1780984794143_145954.pdf",
+        "sourceType": "precedent",
+        "forceRefresh": true
+      },
+      "status": "OK",
+      "elapsedMs": 3274,
+      "errors": []
+    },
+    {
+      "name": "search_legal",
+      "args": {
+        "query": "2024다272736",
+        "types": ["precedent"],
+        "forceRefresh": true,
+        "limit": 20
+      },
+      "status": "NOT_FOUND",
+      "elapsedMs": 339,
+      "errors": [],
+      "coverage": {
+        "pages": [
+          {
+            "sourceType": "precedent",
+            "query": "2024다272736",
+            "searchScope": "case_number",
+            "caseNumber": "2024다272736",
+            "page": 1,
+            "pageSize": 20,
+            "totalCount": 0,
+            "fetchedCount": 0,
+            "hasMore": false
+          }
+        ],
+        "resultLimitReached": false
+      }
+    },
+    {
+      "name": "search_legal",
+      "args": {
+        "query": "2024두32393",
+        "types": ["precedent"],
+        "forceRefresh": true,
+        "limit": 20
+      },
+      "status": "OK",
+      "elapsedMs": 240,
+      "errors": [],
+      "coverage": {
+        "pages": [
+          {
+            "sourceType": "precedent",
+            "query": "2024두32393",
+            "searchScope": "case_number",
+            "caseNumber": "2024두32393",
+            "page": 1,
+            "pageSize": 20,
+            "totalCount": 1,
+            "fetchedCount": 1,
+            "hasMore": false
+          }
+        ],
+        "resultLimitReached": false
+      }
+    },
+    {
+      "name": "read_official_case_context",
+      "args": {
+        "url": "https://dart.fss.or.kr/report/viewer.do?rcpNo=20240214002102&dcmNo=9618945&eleId=67&offset=7925427&length=97985&dtd=dart3.xsd",
+        "caseNumber": "2023나2038708"
+      },
+      "status": "OK",
+      "elapsedMs": 174,
+      "errors": []
+    },
+    {
+      "name": "search_legal_content",
+      "args": {
+        "query": "방위사업법 제3조에서 방위력개선사업의 뜻을 설명해줘",
+        "types": ["law"],
+        "forceRefresh": true,
+        "mode": "fast",
+        "limit": 5
+      },
+      "status": "OK",
+      "elapsedMs": 936,
+      "errors": [],
+      "coverage": {
+        "discoveryScope": "major_documents",
+        "candidateDocuments": 1,
+        "inspectedDocuments": 1,
+        "attemptedDocuments": 1,
+        "unavailableDocuments": 0,
+        "remainingCandidates": 0,
+        "returnedDocuments": 1,
+        "omittedResults": 0,
+        "discoveryResultLimitReached": false,
+        "pages": [
+          {
+            "sourceType": "law",
+            "query": "방위사업법",
+            "searchScope": "title",
+            "page": 1,
+            "pageSize": 20,
+            "totalCount": 3,
+            "fetchedCount": 3,
+            "hasMore": false
+          }
+        ],
+        "hasMorePages": false,
+        "paginationKnown": true,
+        "omittedQueryVariants": 2,
+        "truncatedEvidence": true,
+        "exhaustive": false,
+        "nextAction": "expand_search"
+      }
+    }
+  ],
+  "tools": [
+    "search_legal",
+    "get_legal_detail",
+    "list_legal_apis",
+    "query_legal_api",
+    "get_legal_api_body",
+    "search_legal_content",
+    "search_official_court",
+    "read_official_case_context",
+    "get_legal_history",
+    "verify_citations",
+    "search_dapa_info",
+    "get_dapa_organization",
+    "search_dapa_policy",
+    "get_dapa_policy_page",
+    "search_dapa_legal_catalog",
+    "get_dapa_legal_catalog_item",
+    "get_dapa_legal_content",
+    "dapa_catalog_status",
+    "source_health"
+  ],
+  "actualInstalledPlugin": {
+    "query": "방산물자 납품계약에서 지체상금이 문제 된 판례 사례를 알려줘",
+    "toolMs": 7426,
+    "codeRevision": "860a6751f2185e575626490015ca623c138dfc5a",
+    "measurement": "Actual installed plugin search_legal_content retrieval only; excludes subsequent model reasoning and answer generation.",
+    "answer": "대법원 2026.4.30. 선고 2024다272736 판결문을 확인했습니다. 원심이 작업중지명령의 경위·기간 등을 고려해 지체상금 중20%를 감액한 판단은 유지됐습니다. 다만 이 사건 계약의 지연손해금률은 특수조건에 따른 금융기관 대출평균금리를 적용해야 한다고 보아 그 부분은 파기환송했습니다. 판결문은 회사를 익명 처리하고 있으므로 방위사업청 관련 사실관계는 원심 사건번호2023나2038708과 일치하는 공식 공시로 별도 대조해야 합니다. 개별 계약에 동일 감액률이나 면제가 자동 적용되는 것은 아닙니다."
+  }
+}
