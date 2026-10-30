@@ -10,8 +10,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
-    "test": "npm run build && vitest run",
-    "test:watch": "vitest",
+    "test": "npm run build && vitest run --dir tests",
+    "test:watch": "vitest --dir tests",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "sync:dapa-catalog": "npm run build && node scripts/sync-dapa-catalog.mjs",
@@ -24,17 +24,17 @@
     "node": ">=20.19.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "cheerio": "^1.1.2",
-    "kordoc": "2.5.2",
+    "kordoc": "4.24.8",
     "ky": "2.0.2",
-    "zod": "^4.4.3"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.10",
     "@types/node": "^24.3.0",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.12"
   },
   "license": "MIT",
   "private": true

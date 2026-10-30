@@ -30,7 +30,14 @@ class StrictTransportAdapter implements Transport {
   }
 
   async send(message: JSONRPCMessage, options?: TransportSendOptions): Promise<void> {
-    await this.inner.send(message, options)
+    await this.inner.send(message, {
+      ...(options?.resumptionToken === undefined
+        ? {}
+        : { resumptionToken: options.resumptionToken }),
+      ...(options?.onresumptiontoken === undefined
+        ? {}
+        : { onresumptiontoken: options.onresumptiontoken }),
+    })
   }
 
   async close(): Promise<void> {

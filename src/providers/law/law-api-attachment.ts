@@ -1,5 +1,4 @@
 import { load } from "cheerio"
-import { parse } from "kordoc"
 import { DapaError } from "../../lib/errors/dapa-error.js"
 import { removeOcSearchParams, sanitizeUrlString } from "./law-api-sanitize.js"
 import type { LawHttpClient } from "./law-http.js"
@@ -45,7 +44,8 @@ export async function retrieveLawApiAttachment(
     }
   }
 
-  const parsed = await parse(resource.bytes)
+  const { parse } = await import("kordoc")
+  const parsed = await parse(resource.bytes, { ocr: false })
   if (!parsed.success) {
     throw new DapaError(
       "SOURCE_UNAVAILABLE",
