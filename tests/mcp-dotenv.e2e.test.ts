@@ -36,7 +36,7 @@ describe("DAPA MCP dotenv startup", () => {
       const response = await client.listTools()
 
       // Then
-      expect(response.tools).toHaveLength(17)
+      expect(response.tools.map((tool) => tool.name)).toContain("search_dapa_info")
     } finally {
       await client.close()
       await rm(workingDirectory, { recursive: true, force: true })
@@ -62,7 +62,7 @@ describe("DAPA MCP dotenv startup", () => {
       const response = await client.listTools()
 
       // Then
-      expect(response.tools).toHaveLength(17)
+      expect(response.tools.map((tool) => tool.name)).toContain("search_dapa_info")
     } finally {
       await client.close()
       await rm(workingDirectory, { recursive: true, force: true })

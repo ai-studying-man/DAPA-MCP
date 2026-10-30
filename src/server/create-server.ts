@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
+import { OfficialCourtProvider } from "../providers/court/provider.js"
 import { loadDapaCatalogProvider } from "../providers/dapa-catalog/provider.js"
 import { loadDapaInfoProvider } from "../providers/dapa-info/dapa-info-provider.js"
 import { loadDapaPolicyProvider } from "../providers/dapa-policy/provider.js"
@@ -10,6 +11,7 @@ import { registerTools } from "../tools/register-tools.js"
 import { DAPA_MCP_INSTRUCTIONS } from "./instructions.js"
 
 export type ServerConfig = {
+  readonly officialCourt?: { readonly baseUrl?: string; readonly fileBaseUrl?: string }
   readonly dapaInfoPath: string
   readonly dapaCatalogPath: string
   readonly dapaPolicyPath: string
@@ -19,6 +21,7 @@ export type ServerConfig = {
 }
 
 export type DapaServerDependencies = {
+  readonly court?: OfficialCourtProvider
   readonly law: LawProvider
   readonly lawApi: LawApiProvider
   readonly dapaInfo: Awaited<ReturnType<typeof loadDapaInfoProvider>>
@@ -37,6 +40,9 @@ export async function loadDapaServerDependencies(
   const dapaPolicy = await loadDapaPolicyProvider(config.dapaPolicyPath)
   const law = new LawProvider(config.law)
   return {
+    ...(config.officialCourt === undefined
+      ? {}
+      : { court: new OfficialCourtProvider(config.officialCourt) }),
     law,
     lawApi: new LawApiProvider(config.law),
     dapaInfo,

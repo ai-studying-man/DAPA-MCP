@@ -4,6 +4,7 @@ import { z } from "zod"
 import type { ServerConfig } from "./create-server.js"
 
 const EnvironmentSchema = z.object({
+  COURT_OFFICIAL_FALLBACK_ENABLED: z.enum(["0", "1"]).default("1"),
   LAW_API_OC: z.string().min(1).optional(),
   LAW_API_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
   LAW_API_RETRY_LIMIT: z.coerce.number().int().min(0).max(5).default(1),
@@ -69,6 +70,7 @@ export function loadRuntimeConfig(
   const dapaInfoPath = resolveDapaInfoPath(parsed.DAPA_INFO_PATH, paths)
   return {
     server: {
+      ...(parsed.COURT_OFFICIAL_FALLBACK_ENABLED === "1" ? { officialCourt: {} } : {}),
       dapaInfoPath,
       dapaCatalogPath: resolve(dapaInfoPath, "legal", "catalog.json"),
       dapaPolicyPath: resolve(dapaInfoPath, "policy", "catalog.json"),

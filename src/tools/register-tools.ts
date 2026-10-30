@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
+import type { OfficialCourtProvider } from "../providers/court/provider.js"
 import { getDapaLegalContent } from "../providers/dapa-catalog/content.js"
 import type { DapaCatalogProvider } from "../providers/dapa-catalog/provider.js"
 import { DAPA_CATEGORIES } from "../providers/dapa-info/categories.js"
@@ -14,9 +15,15 @@ import { GetLegalDetailSchema, LEGAL_SOURCE_TYPES } from "./legal-tool-schemas.j
 import { registerDapaPolicyTools } from "./register-dapa-policy-tools.js"
 import { registerLawApiTools } from "./register-law-api-tools.js"
 import { registerLegalContentTools } from "./register-legal-content-tools.js"
+import { CaseNumberSchema, registerOfficialSourceTools } from "./register-official-source-tools.js"
 import { READ_ONLY_ANNOTATIONS, textResult } from "./tool-response.js"
 
 const SearchLegalSchema = {
+  caseNumber: CaseNumberSchema.optional().describe(
+    "판례 사건번호 전용 조회(nb). 판례 유형에만 적용합니다.",
+  ),
+  searchScope: z.enum(["title", "content"]).optional(),
+  page: z.number().int().min(1).max(1000).optional(),
   query: z.string().min(1).describe("법령·판례·해석례 검색어"),
   types: z.array(z.enum(LEGAL_SOURCE_TYPES)).max(8).default(["law"]),
   currentOnly: z.boolean().default(true),
@@ -51,6 +58,7 @@ const GetOrganizationSchema = {
 }
 
 type ToolDependencies = {
+  readonly court?: OfficialCourtProvider
   readonly law: LawProvider
   readonly lawApi: LawApiProvider
   readonly dapaInfo: DapaInfoProvider
@@ -80,6 +88,9 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
           limit: input.limit,
           ...(input.asOfDate === undefined ? {} : { asOfDate: input.asOfDate }),
           ...(input.organization === undefined ? {} : { organization: input.organization }),
+          ...(input.caseNumber === undefined ? {} : { caseNumber: input.caseNumber }),
+          ...(input.searchScope === undefined ? {} : { searchScope: input.searchScope }),
+          ...(input.page === undefined ? {} : { page: input.page }),
         }),
       ),
   )
@@ -94,18 +105,29 @@ export function registerTools(server: McpServer, dependencies: ToolDependencies)
     },
     async (input) =>
       toToolResult(
-        await dependencies.law.getDetail({
-          documentId: input.documentId,
-          sourceType: input.sourceType,
-          forceRefresh: input.forceRefresh,
-          currentOnly: input.currentOnly,
-          ...(input.asOfDate === undefined ? {} : { asOfDate: input.asOfDate }),
-        }),
+        input.asOfDate === undefined &&
+          input.sourceType === "precedent" &&
+          input.documentId.startsWith("court:") &&
+          dependencies.court !== undefined
+          ? await dependencies.court.getDetail(input)
+          : await dependencies.law.getDetail({
+              documentId: input.documentId,
+              sourceType: input.sourceType,
+              forceRefresh: input.forceRefresh,
+              currentOnly: input.currentOnly,
+              ...(input.asOfDate === undefined ? {} : { asOfDate: input.asOfDate }),
+            }),
       ),
   )
 
   registerLawApiTools(server, dependencies.lawApi, dependencies.maxLawApiToolResponseChars)
-  registerLegalContentTools(server, dependencies.law, dependencies.legalContentSearchBudgetMs)
+  registerLegalContentTools(
+    server,
+    dependencies.law,
+    dependencies.legalContentSearchBudgetMs,
+    dependencies.court,
+  )
+  registerOfficialSourceTools(server, dependencies.court)
 
   server.registerTool(
     "get_legal_history",

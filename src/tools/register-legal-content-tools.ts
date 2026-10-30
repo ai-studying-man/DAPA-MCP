@@ -1,8 +1,9 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
+import type { OfficialCourtProvider } from "../providers/court/provider.js"
 import { LEGAL_CONTENT_SEARCH_MODES } from "../providers/law/content-search.js"
+import { searchWithCourtFallback } from "../providers/law/court-fallback.js"
 import type { LawProvider } from "../providers/law/law-provider.js"
-import { searchLegalContentParallel } from "../providers/law/parallel-content-search.js"
 import { READ_ONLY_ANNOTATIONS, textResult } from "./tool-response.js"
 
 const LEGAL_SOURCE_TYPES = [
@@ -47,6 +48,7 @@ export function registerLegalContentTools(
   server: McpServer,
   law: LawProvider,
   timeBudgetMs: number,
+  court?: OfficialCourtProvider,
 ): void {
   server.registerTool(
     "search_legal_content",
@@ -59,16 +61,20 @@ export function registerLegalContentTools(
     },
     async (input) =>
       textResult(
-        await searchLegalContentParallel(law, {
-          query: input.query,
-          ...(input.types === undefined ? {} : { types: input.types }),
-          currentOnly: input.currentOnly,
-          forceRefresh: input.forceRefresh,
-          mode: input.mode,
-          limit: input.limit,
-          timeBudgetMs,
-          ...(input.asOfDate === undefined ? {} : { asOfDate: input.asOfDate }),
-        }),
+        await searchWithCourtFallback(
+          law,
+          {
+            query: input.query,
+            ...(input.types === undefined ? {} : { types: input.types }),
+            currentOnly: input.currentOnly,
+            forceRefresh: input.forceRefresh,
+            mode: input.mode,
+            limit: input.limit,
+            timeBudgetMs,
+            ...(input.asOfDate === undefined ? {} : { asOfDate: input.asOfDate }),
+          },
+          court,
+        ),
       ),
   )
 }
