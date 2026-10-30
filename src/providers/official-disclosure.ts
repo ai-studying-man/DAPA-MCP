@@ -62,7 +62,7 @@ export async function readOfficialDisclosure(input: {
     const url = validateDisclosureUrl(input.url)
     const response = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(8_000) })
     if (!response.ok || response.body === null)
-      throw new DapaError("SOURCE_UNAVAILABLE", "공식 공시 원문 조회 실패")
+      throw new DapaError("SOURCE_UNAVAILABLE", `공식 공시 원문 HTTP ${response.status}`)
     const maxBytes = 12 * 1024 * 1024
     if (Number(response.headers.get("content-length")) > maxBytes)
       throw new DapaError("SOURCE_UNAVAILABLE", "공시 원문 크기 한도 초과")
