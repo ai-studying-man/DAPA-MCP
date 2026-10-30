@@ -16,6 +16,7 @@ const questions = [
   {
     id: 2,
     type: "law",
+    automaticTypes: true,
     query: "방위사업법에서 방위력개선사업과 군수품 조달은 어떤 차이가 있나요?",
     terms: ["방위력개선사업", "군수품"],
   },
@@ -28,6 +29,7 @@ const questions = [
   {
     id: 4,
     type: "administrative_rule",
+    automaticTypes: true,
     query: "선행연구와 사업타당성조사는 어떻게 다른가요?",
     terms: ["선행연구", "사업타당성조사"],
   },
@@ -95,7 +97,7 @@ try {
           name: "search_legal_content",
           arguments: {
             query: question.query,
-            types: [question.type],
+            ...(question.automaticTypes ? {} : { types: [question.type] }),
             limit: 5,
             mode: "fast",
             currentOnly: true,
@@ -113,11 +115,11 @@ try {
       )
       const evidence = normalize(bodies.map(evidenceText).join("\n"))
       const missing = question.terms.filter((term) => !evidence.includes(normalize(term)))
-      const direct =
+      const defenseContext =
         !question.defense ||
         bodies.some(
           (hit) =>
-            hit.caseRelevance === "direct_defense" ||
+            hit.caseRelevance === "defense_context" ||
             /방위사업청|방산물자|군수품/u.test(evidenceText(hit)),
         )
       const verdict =
@@ -125,11 +127,13 @@ try {
           ? "NO_VERIFIED_BODY"
           : missing.length > 0
             ? "PARTIAL_EVIDENCE"
-            : !direct
+            : !defenseContext
               ? "GENERAL_CASE_ONLY"
               : payload.answerEvidence?.decision !== "grounded"
                 ? "PARTIAL_EVIDENCE"
-                : "BODY_CONFIRMED"
+                : question.defense
+                  ? "CONTEXT_ONLY_REQUIRES_REVIEW"
+                  : "BODY_CONFIRMED"
       const result = {
         ...question,
         elapsedMs: Math.round(performance.now() - started),
