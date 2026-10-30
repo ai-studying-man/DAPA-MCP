@@ -51,13 +51,14 @@ export function planCaseSearch(query: string): CaseSearchPlan {
   )
   const terms = [...new Set([...mapped, ...fallback])]
   const qualityIssue = /(?:품질|규격|성능).*(?:미달|부족|불량)/u.test(normalized)
+  const requestsCase = /(?:판례|사례|소송|분쟁|법원|제재|책임|위법|적법)/u.test(query)
   return {
-    intent: /(?:판례|사례|소송|분쟁|법원|제재|책임|위법|적법)/u.test(query)
-      ? "case_request"
-      : "comparison",
+    intent: requestsCase ? "case_request" : "comparison",
     searchQueries: qualityIssue
       ? [...new Set(["입찰참가자격제한", "부정한 제조", ...terms])]
-      : terms,
+      : mapped.length === 0 && !requestsCase
+        ? []
+        : terms,
     evidenceQueries: qualityIssue
       ? ["부정한 제조", "품질 미달", "규격 미달", "성능 미달", "품질", "규격"]
       : terms,
