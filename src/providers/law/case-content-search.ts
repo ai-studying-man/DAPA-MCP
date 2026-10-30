@@ -1,4 +1,5 @@
 import { normalizeSearchText } from "../../lib/normalization/text.js"
+import type { DapaSearchResult } from "../../types/results.js"
 import { planCaseSearch } from "./case-search-plan.js"
 import type {
   LegalContentHit,
@@ -32,6 +33,7 @@ export async function searchCases(
           .flatMap((query) => [
             { query: `${query} 방위사업청`, searchScope: "content" as const, focused: true },
             { query: `${query} 군수품`, searchScope: "content" as const, focused: true },
+            { query: `${query} 방위산업`, searchScope: "content" as const, focused: true },
             { query, searchScope: "content" as const, focused: false },
           ])
       : []),
@@ -49,22 +51,23 @@ export async function searchCases(
       }),
     ),
   )
-  const unique = new Map(
-    searches.flatMap((search) => search.results).map((document) => [document.documentId, document]),
-  )
+  const unique = new Map<string, DapaSearchResult>()
+  for (const document of searches.flatMap((search) => search.results)) {
+    const key = caseKey(document)
+    if (!unique.has(key)) unique.set(key, document)
+  }
   const quota = thorough ? (plan.intent === "case_request" ? 5 : 3) : 2
   const focusedIds = new Set(
     searches.flatMap((search, index) =>
-      requests[index]?.focused === true
-        ? search.results.map((document) => document.documentId)
-        : [],
+      requests[index]?.focused === true ? search.results.map(caseKey) : [],
     ),
   )
   const documents = rankCandidates([...unique.values()], plan.evidenceQueries)
     .map((document, index) => ({
       document,
       index,
-      focused: Number(focusedIds.has(document.documentId)),
+      focused: Number(focusedIds.has(caseKey(document))),
+      contractDispute: Number(/채무부존재|물품대금|계약대금|계약금반환/u.test(document.title)),
       issues: plan.searchQueries.reduce(
         (count, query) =>
           count + Number(normalizeSearchText(document.title).includes(normalizeSearchText(query))),
@@ -75,6 +78,7 @@ export async function searchCases(
       (left, right) =>
         right.focused - left.focused ||
         right.issues - left.issues ||
+        right.contractDispute - left.contractDispute ||
         (right.document.date ?? "").localeCompare(left.document.date ?? "") ||
         left.index - right.index,
     )
@@ -86,7 +90,7 @@ export async function searchCases(
       const response = await law.getDetail(request)
       if (
         response.status === "OK" &&
-        /(?:방위사업청|방산물자|군수품|국방규격)/u.test(
+        /(?:방위사업청|방위산업|방산물자|군수품|국방규격)/u.test(
           JSON.stringify({ detail: response.detail, content: response.results[0]?.content }),
         )
       )
@@ -145,4 +149,10 @@ export async function searchCases(
       omittedQueryVariants: Math.max(0, plan.searchQueries.length - queries.length),
     }),
   }
+}
+
+function caseKey(document: DapaSearchResult): string {
+  return document.organization && document.summary
+    ? JSON.stringify([document.organization, document.summary])
+    : document.documentId
 }
