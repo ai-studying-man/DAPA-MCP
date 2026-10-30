@@ -55,7 +55,7 @@ describe("answer evidence gate", () => {
     // Given / When
     const result = answerEvidence("선행연구와 사업타당성조사는 어떻게 다른가요?", [
       hit("선행연구 정의", "content"),
-      hit("사업타당성조사 절차", "content"),
+      hit("사업타당성조사란 예산 편성 전 타당성을 점검하는 조사다", "content"),
     ])
     // Then
     expect(result.decision).toBe("grounded")

@@ -2,6 +2,7 @@ import { z } from "zod"
 import { normalizeSearchText } from "../../lib/normalization/text.js"
 import type { LegalDocumentDetail } from "../../types/results.js"
 import { requestedArticles, selectRequestedDetail } from "./citation-location.js"
+import { isDefinitionEvidence } from "./comparison-evidence.js"
 import { dateValue } from "./law-temporal-data.js"
 
 const RecordSchema = z.record(z.string(), z.unknown())
@@ -32,10 +33,7 @@ export function selectMatchingDetail(
             (article) => article.effectiveDate === undefined || article.effectiveDate <= asOfDate,
           ),
         }
-  const requested = requestedArticles(queries)
-  if (requested.length > 0) {
-    return selectRequestedDetail(eligible, queries)
-  }
+  if (requestedArticles(queries).length > 0) return selectRequestedDetail(eligible, queries)
   for (const query of queries) {
     const matching = selectDetailForQuery(eligible, query)
     if (matching !== undefined) {
@@ -74,8 +72,9 @@ function selectDetailForQuery(
   )
   articles.sort(
     (left, right) =>
+      Number(isDefinitionEvidence(right, query)) - Number(isDefinitionEvidence(left, query)) ||
       Number(textContainsAnyQuery(right.title ?? "", queries)) -
-      Number(textContainsAnyQuery(left.title ?? "", queries)),
+        Number(textContainsAnyQuery(left.title ?? "", queries)),
   )
   const supplementaryProvisions = detail.supplementaryProvisions.filter((provision) =>
     textContainsAnyQuery(provision.text, queries),

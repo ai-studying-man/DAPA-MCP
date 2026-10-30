@@ -1,16 +1,14 @@
-import { normalizeSearchText } from "../../lib/normalization/text.js"
 import type { ResponseStatus, SourceType } from "../../types/results.js"
 import { answerEvidence } from "./answer-evidence.js"
+import { type CaseContentHit, searchCases } from "./case-content-search.js"
 import { planCaseSearch } from "./case-search-plan.js"
 import {
-  type LegalContentHit,
   type LegalContentSearchInput,
   type LegalContentSearchResponse,
   searchLegalContent,
 } from "./content-search.js"
-import { type ContentSearchCoverage, contentSearchCoverage } from "./content-search-coverage.js"
-import { hydrateDocuments } from "./content-search-hydration.js"
-import { inferLegalSourceTypes, rankCandidates } from "./content-search-plan.js"
+import type { ContentSearchCoverage } from "./content-search-coverage.js"
+import { inferLegalSourceTypes } from "./content-search-plan.js"
 import type { LawProvider } from "./law-provider.js"
 import { toErrorShape } from "./law-provider-response.js"
 
@@ -24,9 +22,7 @@ export type ContentSearchLane = {
   readonly errors: readonly SearchError[]
   readonly coverage?: ContentSearchCoverage
 }
-export type CaseContentHit = LegalContentHit & {
-  readonly caseRelevance?: "direct_defense" | "general_supplement" | "unverified"
-}
+export type { CaseContentHit } from "./case-content-search.js"
 export type ParallelContentSearchResponse = Omit<LegalContentSearchResponse, "results"> & {
   readonly results: readonly CaseContentHit[]
   readonly lanes: readonly ContentSearchLane[]
@@ -103,11 +99,11 @@ async function searchWithEvidenceExpansion(
 ): Promise<LegalContentSearchResponse> {
   const search = cases ? searchCases : searchLegalContent
   const first = await search(law, input)
-  if (
-    input.mode === "thorough" ||
-    answerEvidence(input.query, first.results).decision !== "partial" ||
-    Date.now() + 1_000 >= (input.deadlineAt ?? 0)
-  )
+  const decision = answerEvidence(input.query, first.results).decision
+  const insufficient =
+    decision === "partial" ||
+    (cases && decision === "abstain" && first.status !== "SOURCE_UNAVAILABLE")
+  if (input.mode === "thorough" || !insufficient || Date.now() + 1_000 >= (input.deadlineAt ?? 0))
     return first
   const expanded = await search(law, { ...input, mode: "thorough" })
   return answerEvidence(input.query, expanded.results).decision === "grounded" ? expanded : first
@@ -121,116 +117,6 @@ async function runLane(
   } catch (error) {
     if (!(error instanceof Error)) throw error
     return { status: "SOURCE_UNAVAILABLE", results: [], errors: [toErrorShape(error)] }
-  }
-}
-
-async function searchCases(
-  law: Provider,
-  input: LegalContentSearchInput,
-): Promise<LegalContentSearchResponse> {
-  const plan = planCaseSearch(input.query)
-  const thorough = input.mode === "thorough"
-  const { organization: _organization, asOfDate: _asOfDate, ...caseInput } = input
-  const queries = plan.searchQueries.slice(0, thorough ? 3 : 2)
-  const searches = await Promise.all(
-    queries.map((query) =>
-      law.search({
-        ...caseInput,
-        query,
-        types: ["precedent"],
-        currentOnly: false,
-        searchScope: "title",
-        page: input.page ?? 1,
-        limit: thorough ? 30 : 20,
-      }),
-    ),
-  )
-  const unique = new Map(
-    searches.flatMap((search) => search.results).map((document) => [document.documentId, document]),
-  )
-  const quota = thorough ? (plan.intent === "case_request" ? 5 : 3) : 2
-  const documents = rankCandidates([...unique.values()], plan.evidenceQueries)
-    .map((document, index) => ({
-      document,
-      index,
-      issues: plan.searchQueries.reduce(
-        (count, query) =>
-          count + Number(normalizeSearchText(document.title).includes(normalizeSearchText(query))),
-        0,
-      ),
-    }))
-    .sort(
-      (left, right) =>
-        right.issues - left.issues ||
-        (right.document.date ?? "").localeCompare(left.document.date ?? "") ||
-        left.index - right.index,
-    )
-    .map(({ document }) => document)
-    .slice(0, Math.min(quota, Math.max(input.limit ?? quota, 1)))
-  const defenseBodies = new Set<string>()
-  const caseProvider: Pick<LawProvider, "getDetail"> = {
-    getDetail: async (request) => {
-      const response = await law.getDetail(request)
-      if (
-        response.status === "OK" &&
-        /(?:방위사업청|방산|군수)/u.test(
-          JSON.stringify({ detail: response.detail, content: response.results[0]?.content }),
-        )
-      )
-        defenseBodies.add(request.documentId)
-      return response
-    },
-  }
-  const outcomes = await hydrateDocuments({
-    law: caseProvider,
-    documents,
-    queries: plan.evidenceQueries,
-    forceRefresh: input.forceRefresh === true,
-    concurrency: thorough ? 3 : 2,
-    deadlineAt: input.deadlineAt ?? Date.now() + 25_000,
-    currentOnly: false,
-  })
-  const relevancePriority = { direct_defense: 2, general_supplement: 1, unverified: 0 } as const
-  const results: CaseContentHit[] = outcomes
-    .map(
-      (hit) =>
-        ({
-          ...hit,
-          caseRelevance:
-            hit.match !== "content"
-              ? "unverified"
-              : defenseBodies.has(hit.document.documentId)
-                ? "direct_defense"
-                : "general_supplement",
-        }) satisfies CaseContentHit,
-    )
-    .sort(
-      (left, right) =>
-        relevancePriority[right.caseRelevance] - relevancePriority[left.caseRelevance],
-    )
-  const errors = [
-    ...searches.flatMap((search) => search.errors),
-    ...outcomes.flatMap((hit) => hit.errors),
-  ]
-  return {
-    status:
-      errors.length > 0
-        ? outcomes.some((hit) => hit.status === "OK")
-          ? "PARTIAL_RESULT"
-          : "SOURCE_UNAVAILABLE"
-        : outcomes.length === 0
-          ? "NOT_FOUND"
-          : "OK",
-    results,
-    errors,
-    coverage: contentSearchCoverage({
-      searches,
-      candidateDocuments: unique.size,
-      outcomes,
-      returnedDocuments: results.length,
-      majorDocumentsOnly: false,
-      omittedQueryVariants: Math.max(0, plan.searchQueries.length - queries.length),
-    }),
   }
 }
 

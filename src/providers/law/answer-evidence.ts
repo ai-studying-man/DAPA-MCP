@@ -1,4 +1,5 @@
 import { normalizeSearchText } from "../../lib/normalization/text.js"
+import { comparisonEvidence } from "./comparison-evidence.js"
 import type { LegalContentHit } from "./content-search.js"
 import { planContentSearch } from "./content-search-plan.js"
 
@@ -23,13 +24,19 @@ export function answerEvidence(query: string, hits: readonly LegalContentHit[]) 
         .evidenceQueries.filter((term) => !/제\s*\d+\s*조/u.test(term))
         .slice(0, 2)
     : []
-  const missingTerms = terms.filter((term) => !evidence.includes(normalizeSearchText(term)))
+  const comparisonCoverage = comparisonEvidence(terms, bodies)
+  const missingTerms = terms.filter(
+    (term) =>
+      !evidence.includes(normalizeSearchText(term)) ||
+      comparisonCoverage.some((item) => item.term === term && item.coverage !== "primary_evidence"),
+  )
   const context = requiredCaseContext(query, bodies)
   missingTerms.push(...context.missingTerms)
   return {
     decision: bodies.length === 0 ? "abstain" : missingTerms.length > 0 ? "partial" : "grounded",
     bodyCount: bodies.length,
     comparisonTerms: terms,
+    comparisonCoverage,
     missingTerms,
     requiredContext: context.requiredTerms,
     claimVerification: "not_performed",
