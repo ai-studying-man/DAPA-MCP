@@ -13,7 +13,7 @@ import type { LawProvider } from "./law-provider.js"
 type Provider = Pick<LawProvider, "search" | "getDetail">
 
 export type CaseContentHit = LegalContentHit & {
-  readonly caseRelevance?: "direct_defense" | "general_supplement" | "unverified"
+  readonly caseRelevance?: "defense_context" | "general_supplement" | "unverified"
 }
 
 export async function searchCases(
@@ -103,7 +103,7 @@ export async function searchCases(
     deadlineAt: input.deadlineAt ?? Date.now() + 25_000,
     currentOnly: false,
   })
-  const relevancePriority = { direct_defense: 2, general_supplement: 1, unverified: 0 } as const
+  const relevancePriority = { defense_context: 2, general_supplement: 1, unverified: 0 } as const
   const results: CaseContentHit[] = outcomes
     .map(
       (hit) =>
@@ -113,7 +113,7 @@ export async function searchCases(
             hit.match !== "content"
               ? "unverified"
               : defenseBodies.has(hit.document.documentId)
-                ? "direct_defense"
+                ? "defense_context"
                 : "general_supplement",
         }) satisfies CaseContentHit,
     )

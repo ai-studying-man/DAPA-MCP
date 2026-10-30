@@ -106,7 +106,10 @@ async function searchWithEvidenceExpansion(
   if (input.mode === "thorough" || !insufficient || Date.now() + 1_000 >= (input.deadlineAt ?? 0))
     return first
   const expanded = await search(law, { ...input, mode: "thorough" })
-  return answerEvidence(input.query, expanded.results).decision === "grounded" ? expanded : first
+  return answerEvidence(input.query, expanded.results).decision === "grounded" ||
+    (cases && expanded.results.some((hit) => hit.status === "OK" && hit.match === "content"))
+    ? expanded
+    : first
 }
 
 async function runLane(

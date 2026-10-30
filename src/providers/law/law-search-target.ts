@@ -68,6 +68,7 @@ export async function searchLawTarget(
       coverage: {
         sourceType: target.sourceType,
         query: input.query,
+        searchScope: input.searchScope ?? "title",
         page,
         pageSize: display,
         totalCount: parsed.totalCount,

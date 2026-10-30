@@ -32,6 +32,13 @@ export function answerEvidence(query: string, hits: readonly LegalContentHit[]) 
   )
   const context = requiredCaseContext(query, bodies)
   missingTerms.push(...context.missingTerms)
+  if (
+    /지체상금/u.test(query) &&
+    /방위사업청|방산|군수품/u.test(query) &&
+    bodies.some((hit) => hit.document.sourceType === "precedent")
+  ) {
+    missingTerms.push("지체상금 판단과 방위사업 사실관계의 직접 연관성")
+  }
   return {
     decision: bodies.length === 0 ? "abstain" : missingTerms.length > 0 ? "partial" : "grounded",
     bodyCount: bodies.length,

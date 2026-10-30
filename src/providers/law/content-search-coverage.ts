@@ -38,7 +38,7 @@ export function contentSearchCoverage(input: ContentCoverageInput): ContentSearc
   const pages = input.searches.flatMap((search) => search.coverage?.pages ?? [])
   const latestPages = new Map<string, SearchPageCoverage>()
   for (const page of pages) {
-    const key = JSON.stringify([page.sourceType, page.query ?? ""])
+    const key = JSON.stringify([page.sourceType, page.query ?? "", page.searchScope ?? "title"])
     const prior = latestPages.get(key)
     if (prior === undefined || page.page > prior.page) latestPages.set(key, page)
   }

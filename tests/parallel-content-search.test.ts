@@ -214,7 +214,7 @@ describe("parallel legal and case discovery", () => {
       asOfDate: "2026-10-07",
     })
     // Then
-    expect(result.results[0]?.caseRelevance).toBe("direct_defense")
+    expect(result.results[0]?.caseRelevance).toBe("defense_context")
     expect(result.results[0]?.document.date).toBe("2024-06-27")
     expect(detailInputs).toEqual([false])
   })

@@ -62,8 +62,11 @@ describe("defense delay case discovery", () => {
       })
       // Then
       expect(scopes).toContain("2")
+      expect(result.lanes.find((lane) => lane.name === "cases")?.coverage?.pages).toEqual(
+        expect.arrayContaining([expect.objectContaining({ searchScope: "content" })]),
+      )
       expect(result.results[0]?.document.documentId).toBe("defense")
-      expect(result.answerEvidence.decision).toBe("grounded")
+      expect(result.answerEvidence.decision).toBe("partial")
     },
   )
 })
