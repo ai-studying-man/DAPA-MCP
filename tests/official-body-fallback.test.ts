@@ -14,6 +14,8 @@ describe("official effective body fallback", () => {
     ["20200101", "OK", true, false],
     ["20210101", "SOURCE_UNAVAILABLE", true, false],
     ["20200101", "OK", false, true],
+    ["20200101", "OK", "html", false],
+    ["20210101", "SOURCE_UNAVAILABLE", "html", false],
   ])(
     "uses only the same official version after an effective endpoint 404: %s",
     async (bodyDate, expected, timeout, forceRefresh) => {
@@ -41,7 +43,12 @@ describe("official effective body fallback", () => {
           )
         } else if (url.searchParams.get("target") === "eflaw") {
           effectiveAttempted = true
-          if (timeout) return
+          if (timeout === "html") {
+            response.setHeader("content-type", "text/html")
+            response.end("<html><body>요청하신 정보를 찾을 수 없습니다</body></html>")
+            return
+          }
+          if (timeout === true) return
           response.statusCode = 404
           response.end("{}")
         } else {

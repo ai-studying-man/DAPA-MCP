@@ -1,4 +1,3 @@
-import { HTTPError } from "ky"
 import { TtlCache } from "../../lib/cache/ttl-cache.js"
 import { DapaError } from "../../lib/errors/dapa-error.js"
 import { resolveAdministrativeEffective } from "./law-administrative-effective.js"
@@ -215,10 +214,7 @@ export class LawTemporalAccess {
     } catch (error) {
       if (
         !(error instanceof DapaError) ||
-        !(
-          error.code === "TIMEOUT" ||
-          (error.cause instanceof HTTPError && error.cause.response.status === 404)
-        ) ||
+        !(error.code === "TIMEOUT" || error.code === "SOURCE_UNAVAILABLE") ||
         category !== "law"
       )
         throw error

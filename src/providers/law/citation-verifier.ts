@@ -115,22 +115,40 @@ export class CitationVerifier {
       types: [citation.documentName === "헌법재판소" ? "constitutional_case" : "precedent"],
       limit: 20,
     })
+    if (search.status === "NOT_FOUND")
+      return result(
+        citation.raw,
+        "UNVERIFIED",
+        "법제처 수록 사건에서 확인하지 못했습니다. 미수록 사건일 수 있습니다",
+      )
     const unavailableResult = fromUnavailableSearch(citation.raw, search)
     if (unavailableResult !== undefined) return unavailableResult
-    const exact = search.results.filter((item) => item.summary === citation.caseNumber)
+    const exact = search.results.filter((item) =>
+      item.summary
+        ?.replace(/\s+/gu, "")
+        .split(/[,·;/]/u)
+        .includes(citation.caseNumber ?? ""),
+    )
     if (exact.length === 0)
-      return result(citation.raw, "NOT_FOUND", "사건번호를 확인할 수 없습니다")
+      return result(
+        citation.raw,
+        "UNVERIFIED",
+        "공식 검색에서 정확한 사건번호를 확인하지 못했습니다",
+      )
     if (exact.length > 1)
       return result(citation.raw, "AMBIGUOUS", "동일 사건번호 후보가 여러 건입니다")
     const document = exact[0]
     return document === undefined
       ? result(citation.raw, "NOT_FOUND", "판례 후보가 없습니다")
-      : withDocument(
-          citation.raw,
-          "VERIFIED",
-          "사건번호 존재를 확인했습니다. 판결 내용과 답변 주장의 일치 여부는 별도 본문 검토가 필요합니다",
-          document,
-        )
+      : {
+          ...withDocument(
+            citation.raw,
+            "VERIFIED",
+            "사건번호 존재를 확인했습니다. 판결 내용과 답변 주장의 일치 여부는 별도 본문 검토가 필요합니다",
+            document,
+          ),
+          verificationScope: "case_identity",
+        }
   }
 }
 
