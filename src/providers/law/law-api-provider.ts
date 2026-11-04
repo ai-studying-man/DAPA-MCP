@@ -11,7 +11,7 @@ import { extractLawApiBodyReferences, type LawApiBodyReference } from "./law-api
 import { apiQueryCacheKey, buildSearchParams, inputValue } from "./law-api-request.js"
 import { parseLawApiResponse } from "./law-api-response.js"
 import { sanitizeUrlString } from "./law-api-sanitize.js"
-import guides from "./official-guides.json" with { type: "json" }
+import guides from "./official-guides.js"
 import { temporalRequest, temporalScopeFor } from "./law-api-temporal.js"
 import { LawHttpClient } from "./law-http.js"
 import { extractListCoverage } from "./law-list-coverage.js"

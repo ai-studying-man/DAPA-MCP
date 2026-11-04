@@ -1,4 +1,4 @@
-[
+export default [
   {
     "id": "acrInfoGuide",
     "title": "국민권익위원회 결정문 본문 조회",
