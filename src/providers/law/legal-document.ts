@@ -53,9 +53,18 @@ function parseArticles(value: unknown): readonly LegalArticle[] {
     const branch = stringValue(item["조문가지번호"])
     const title = stringValue(item["조문제목"])
     const effectiveDate = formatDate(stringValue(item["조문시행일자"]))
+    const paragraphs = records(item["항"])
+    const unnumbered = paragraphs.every((p) => !stringValue(p["항번호"]))
+    const body = text.replace(/^\s*제\d+조(?:의\d+)?\s*(?:\([^)]*\))?/u, "").trim()
+    const paragraphStructure = !unnumbered
+      ? undefined
+      : !body || /[①-⑳]/u.test(text) || paragraphs.some((p) => p["항내용"] !== undefined)
+        ? "uncertain"
+        : "undivided"
     return [
       {
         articleNumber,
+        ...(paragraphStructure === undefined ? {} : { paragraphStructure }),
         ...(branch === undefined ? {} : { branch }),
         ...(title === undefined ? {} : { title }),
         ...(effectiveDate === undefined ? {} : { effectiveDate }),

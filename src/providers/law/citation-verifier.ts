@@ -80,6 +80,28 @@ export class CitationVerifier {
     )
     if (article === undefined)
       return withDocument(citation.raw, "NOT_FOUND", "해당 조문을 확인할 수 없습니다", document)
+    const paragraph = citation.article?.match(/제(\d+)항/u)?.[1]
+    if (paragraph !== undefined && article.paragraphStructure === "uncertain")
+      return withDocument(
+        citation.raw,
+        "UNVERIFIED",
+        "공식 응답에서 항 구성을 확인할 수 없습니다",
+        document,
+      )
+    if (paragraph !== undefined && article.paragraphStructure === "undivided")
+      return Number(paragraph) === 1
+        ? withDocument(
+            citation.raw,
+            "UNVERIFIED",
+            "항으로 나뉘지 않은 조문입니다. 제1항 표기를 빼고 인용하세요",
+            document,
+          )
+        : withDocument(
+            citation.raw,
+            "NOT_FOUND",
+            `항으로 나뉘지 않은 조문으로 제${paragraph}항이 없습니다`,
+            document,
+          )
     if (!citationLocationExists(article, citation.article ?? ""))
       return withDocument(
         citation.raw,

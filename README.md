@@ -385,7 +385,6 @@ npm run build
 
 - [국가법령정보 공동활용](https://open.law.go.kr/)
 - [방위사업청](https://www.dapa.go.kr/)
-- 벤치마크: [korean-law-mcp](https://github.com/chrisryugj/korean-law-mcp), MIT
 
 소스 코드는 [MIT License](./LICENSE)로 배포한다. 제공 데이터의 권리와 이용조건은
 각 원 제공기관 정책을 따른다. 자세한 고지는 [NOTICE](./NOTICE)에 있다.

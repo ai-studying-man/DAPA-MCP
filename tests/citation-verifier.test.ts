@@ -20,7 +20,12 @@ describe("CitationVerifier", () => {
           JSON.stringify({
             법령: {
               기본정보: { 법령명_한글: "방위사업법", 법령ID: "009822" },
-              조문: { 조문단위: [{ 조문번호: "3의2", 조문제목: "청렴서약제" }] },
+              조문: {
+                조문단위: [
+                  { 조문번호: "3의2", 조문제목: "청렴서약제", 조문내용: "단일 본문" },
+                  { 조문번호: "4", 조문내용: "① 구조 정보가 누락된 본문" },
+                ],
+              },
             },
           }),
         )
@@ -57,6 +62,16 @@ describe("CitationVerifier", () => {
       status: "VERIFIED",
       documentId: "276787",
     })
+    const paragraphs = await verifier.verify([
+      "방위사업법 제3조의2제1항",
+      "방위사업법 제3조의2제2항",
+      "방위사업법 제4조제2항",
+    ])
+    expect(paragraphs.map((entry) => entry.status)).toEqual([
+      "UNVERIFIED",
+      "NOT_FOUND",
+      "UNVERIFIED",
+    ])
   })
 
   it("returns NOT_FOUND only for a completed zero-result search", async () => {

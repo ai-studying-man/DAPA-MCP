@@ -40,6 +40,7 @@ export type DapaSearchResult = {
 }
 
 export type LegalArticle = {
+  readonly paragraphStructure?: "undivided" | "uncertain"
   readonly articleNumber: string
   readonly branch?: string
   readonly title?: string
