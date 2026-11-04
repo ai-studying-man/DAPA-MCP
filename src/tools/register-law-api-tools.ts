@@ -49,6 +49,32 @@ export function registerLawApiTools(
   provider: LawApiProvider,
   maxResponseChars = 250_000,
 ): void {
+  for (const guide of guides) {
+    const names = guide.id.startsWith("schlPubRul")
+      ? [...guide.parameters, "target"]
+      : guide.parameters
+    const inputSchema = Object.fromEntries(names.map((name) => [name, z.string().optional()]))
+    server.registerTool(
+      guide.id,
+      {
+        title: guide.title,
+        description: `법제처 ${guide.category} · ${guide.title}. 공식 가이드에 정의된 이 조회만 실행합니다.`,
+        inputSchema,
+        annotations: READ_ONLY_ANNOTATIONS,
+      },
+      async (input) => {
+        const parameters: Record<string, string> = {}
+        for (const name of names) {
+          const value = input[name]
+          if (typeof value === "string") parameters[name] = value
+        }
+        const result = await provider.queryGuide(guide.id, parameters)
+        return {
+          content: [{ type: "text", text: stringifyBoundedToolResponse(result, maxResponseChars) }],
+        }
+      },
+    )
+  }
   server.registerTool(
     "list_legal_apis",
     {

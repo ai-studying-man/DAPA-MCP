@@ -4,6 +4,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { z } from "zod"
+import { guides } from "../src/providers/law/official-guides.js"
 
 let client: Client
 let transport: StdioClientTransport
@@ -31,6 +32,7 @@ describe("DAPA MCP stdio", () => {
   it("advertises the legal and DAPA catalog tools", async () => {
     // Given
     const expected = [
+      ...guides.map((guide) => guide.id),
       "dapa_catalog_status",
       "get_dapa_legal_catalog_item",
       "get_dapa_legal_content",
