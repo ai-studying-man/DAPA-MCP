@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
+import guides from "../providers/law/official-guides.json" with { type: "json" }
 import {
   getLawApiBodyApiId,
   getLawApiBodyReferenceFields,
@@ -53,11 +54,14 @@ export function registerLawApiTools(
     {
       title: "국가법령정보 API 목록",
       description:
-        "국가법령정보 공동활용의 DAPA 관련 14개 범주와 목록·본문 API target을 조회합니다.",
-      inputSchema: { category: z.enum(LAW_API_CATEGORY_IDS).optional() },
+        "법제처 전체 공개 활용가이드와 기존 분류를 조회합니다. officialGuides의 id는 query_legal_api에 사용합니다.",
+      inputSchema: {
+        category: z.enum(LAW_API_CATEGORY_IDS).optional(),
+        guideSearch: z.string().optional().describe("공식 분류·가이드명·ID 검색"),
+      },
       annotations: READ_ONLY_ANNOTATIONS,
     },
-    async ({ category }) => ({
+    async ({ category, guideSearch }) => ({
       content: [
         {
           type: "text",
@@ -65,6 +69,27 @@ export function registerLawApiTools(
             {
               source: "국가법령정보 공동활용 OPEN API 활용가이드",
               guideUrl: "https://open.law.go.kr/LSO/openApi/guideList.do",
+              ...(category
+                ? {}
+                : {
+                    officialGuideCount: guides.length,
+                    officialGuides: guides
+                      .filter(
+                        (g) =>
+                          !guideSearch ||
+                          [g.category, g.classification, g.title, g.id].some((v) =>
+                            v
+                              .replace(/\s/g, "")
+                              .toLowerCase()
+                              .includes(guideSearch.replace(/\s/g, "").toLowerCase()),
+                          ),
+                      )
+                      .map((g) => ({
+                        ...g,
+                        apiId: g.id,
+                        guideUrl: `https://open.law.go.kr/LSO/openApi/guideResult.do?htmlName=${g.id}`,
+                      })),
+                  }),
               categories: listLawApiCategories(category).map((item) => ({
                 ...item,
                 apis: item.apis.map((api) => ({
@@ -91,12 +116,30 @@ export function registerLawApiTools(
       title: "국가법령정보 API 조회",
       description:
         "list_legal_apis의 apiId로 공식 목록·본문을 온디맨드 조회합니다. 콘텐츠를 MCP에 사전 적재하지 않습니다.",
-      inputSchema: QueryLegalApiSchema,
+      inputSchema: {
+        ...QueryLegalApiSchema,
+        apiId: z.string().min(1),
+        parameters: z
+          .record(z.string(), z.string())
+          .optional()
+          .describe(
+            "공식 가이드 ID 사용 시 해당 가이드의 요청변수. 목록은 query, page, display, 본문은 ID 등 명세에 따라 입력",
+          ),
+      },
       annotations: READ_ONLY_ANNOTATIONS,
     },
     async (input) => {
+      const legacy = QueryLegalApiSchema.apiId.safeParse(input.apiId)
+      if (!legacy.success) {
+        const response = await provider.queryGuide(input.apiId, input.parameters ?? {})
+        return {
+          content: [
+            { type: "text", text: stringifyBoundedToolResponse(response, maxResponseChars) },
+          ],
+        }
+      }
       const response = await provider.query({
-        apiId: input.apiId,
+        apiId: legacy.data,
         limit: input.limit,
         page: input.page,
         currentOnly: input.currentOnly,

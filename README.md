@@ -148,6 +148,8 @@ LAW_API_OC="<your-oc>" npm run backtest:law-api
 
 ## MCP 도구
 
+법제처 전체 공개 API는 `list_legal_apis`의 `officialGuides`에서 찾는다. 2026-11-04 기준 공식 가이드 195개를 분류·세부분류와 함께 수록했다. 예를 들어 `guideSearch: "위원회 결정문"`으로 목록을 좁히고, 반환된 `apiId`와 가이드의 요청변수를 `query_legal_api`의 `parameters`에 넣어 조회한다. 아래의 14개 범주·40개 경로는 기존 전용 조회 기능이다. 방위사업청 관련성은 근거를 검토하는 우선순위이며 전체 공식 API의 조회 범위를 제한하지 않는다.
+
 | 도구 | 역할 |
 |---|---|
 | `search_legal` | 법령·행정규칙·자치법규·판례·헌재·해석례·행정심판 검색 |

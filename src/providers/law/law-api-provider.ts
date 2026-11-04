@@ -11,6 +11,7 @@ import { extractLawApiBodyReferences, type LawApiBodyReference } from "./law-api
 import { apiQueryCacheKey, buildSearchParams, inputValue } from "./law-api-request.js"
 import { parseLawApiResponse } from "./law-api-response.js"
 import { sanitizeUrlString } from "./law-api-sanitize.js"
+import guides from "./official-guides.json" with { type: "json" }
 import { temporalRequest, temporalScopeFor } from "./law-api-temporal.js"
 import { LawHttpClient } from "./law-http.js"
 import { extractListCoverage } from "./law-list-coverage.js"
@@ -81,6 +82,34 @@ export class LawApiProvider {
     return this.config.apiKey === undefined || this.config.apiKey.length === 0
       ? "not_configured"
       : "healthy"
+  }
+
+  async queryGuide(id: string, parameters: Record<string, string>) {
+    const guide = guides.find((entry) => entry.id === id)
+    if (!guide) throw new DapaError("INVALID_ARGUMENT", "공식 가이드 ID를 확인하세요")
+    const key = this.config.apiKey
+    if (!key) throw new DapaError("AUTH_REQUIRED", "법제처 인증 설정이 필요합니다")
+    const params = new URLSearchParams(guide.defaults)
+    for (const [name, value] of Object.entries(parameters)) {
+      if (
+        name === "target" &&
+        id.startsWith("schlPubRul") &&
+        ["school", "public", "pi"].includes(value)
+      ) {
+        params.set(name, value)
+        continue
+      }
+      if (!guide.parameters.includes(name))
+        throw new DapaError("INVALID_ARGUMENT", `지원하지 않는 요청변수: ${name}`)
+      params.set(name, value)
+    }
+    const html = !guide.formats.includes("JSON")
+    const request = { ...Object.fromEntries(params), OC: key, type: html ? "HTML" : "JSON" }
+    const raw = html
+      ? await this.http.getHtml(guide.endpoint, request)
+      : await this.http.get(guide.endpoint, request)
+    const safe = sanitizeUrlString(raw.replaceAll(key, "[redacted]"))
+    return { guideId: id, format: request.type, data: html ? safe : JSON.parse(safe) }
   }
 
   async query(input: LawApiQueryInput): Promise<LawApiQueryResponse> {
