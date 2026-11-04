@@ -1,6 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
-import guides from "../providers/law/official-guides.js"
 import {
   getLawApiBodyApiId,
   getLawApiBodyReferenceFields,
@@ -10,6 +9,7 @@ import {
   listLawApiCategories,
 } from "../providers/law/law-api-catalog.js"
 import type { LawApiProvider } from "../providers/law/law-api-provider.js"
+import { guides } from "../providers/law/official-guides.js"
 import { stringifyBoundedToolResponse } from "./law-api-tool-response.js"
 
 const QueryLegalApiSchema = {
